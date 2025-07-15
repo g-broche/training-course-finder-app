@@ -35,5 +35,5 @@ build/
 ### ENV ###
 .env
 **/resources/**.properties
-!**/resources/application-dev.properties
+!**/resources/application-test.properties
 
