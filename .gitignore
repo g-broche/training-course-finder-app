@@ -34,7 +34,5 @@ build/
 
 ### ENV ###
 .env
-Dockerfile
-docker-compose.yml
 **/resources/**.properties
 

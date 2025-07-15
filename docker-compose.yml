@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16
+    container_name: finder-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finder-api
+    depends_on:
+      - db
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_URL: jdbc:postgresql://db:${DB_PORT}/${DB_NAME}
+      JPA_HIBERNATE_DDL_AUTO: update
+      API_DOMAIN: ${API_DOMAIN}
+      BACK_OFFICE_ORIGIN: ${BACK_OFFICE_ORIGIN}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+
+volumes:
+  postgres_data:
