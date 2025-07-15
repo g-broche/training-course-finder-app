@@ -19,6 +19,7 @@ services:
     depends_on:
       - db
     environment:
+      PROFILE: ${ENV_PROFILE}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_URL: jdbc:postgresql://db:${DB_PORT}/${DB_NAME}
