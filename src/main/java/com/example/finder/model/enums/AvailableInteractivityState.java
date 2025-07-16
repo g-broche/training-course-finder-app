@@ -1,8 +1,8 @@
 package com.example.finder.model.enums;
 
 public enum AvailableInteractivityState {
-    OPEN("Open"),
-    CLOSED("Closed");
+    OPEN("open"),
+    CLOSE("close");
 
     private final String displayName;
 

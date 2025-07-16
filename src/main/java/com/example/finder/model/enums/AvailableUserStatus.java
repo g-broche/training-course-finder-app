@@ -1,8 +1,8 @@
 package com.example.finder.model.enums;
 
 public enum AvailableUserStatus {
-    ALLOWED("Allowed"),
-    BANNED("Banned");
+    ALLOWED("allowed"),
+    BANNED("banned");
 
     private final String displayName;
 

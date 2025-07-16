@@ -1,8 +1,8 @@
 package com.example.finder.model.enums;
 
 public enum AvailableRoles {
-    ADMIN("Admin"),
-    USER("User");
+    ADMIN("admin"),
+    USER("user");
 
     private final String displayName;
 

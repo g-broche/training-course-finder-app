@@ -1,9 +1,9 @@
 package com.example.finder.model.enums;
 
 public enum AvailableRecordStatus {
-    SHOWN("Shown"),
-    HIDDEN("Hidden"),
-    TO_DELETE("To delete");
+    SHOWN("shown"),
+    HIDDEN("hidden"),
+    TO_DELETE("to delete");
 
     private final String displayName;
 

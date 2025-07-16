@@ -1,8 +1,8 @@
 package com.example.finder.model.enums;
 
 public enum AvailableAnnounceTypes {
-    FOUND("Found"),
-    LOST("Lost");
+    FOUND("found"),
+    LOST("lost");
 
     private final String displayName;
 

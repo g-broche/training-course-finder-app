@@ -1,8 +1,9 @@
 package com.example.finder.config;
 
-import com.example.finder.model.Role;
-import com.example.finder.model.enums.AvailableRoles;
-import com.example.finder.repository.RoleRepository;
+import com.example.finder.model.*;
+import com.example.finder.model.enums.*;
+import com.example.finder.repository.*;
+import com.example.finder.seeders.*;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -10,22 +11,40 @@ import org.springframework.stereotype.Component;
 @Component
 public class DatabaseSeeder implements ApplicationRunner{
 
-    private final RoleRepository roleRepository;
+    private final RoleSeeder roleSeeder;
+    private final UserStatusSeeder userStatusSeeder;
+    private final RecordStatusSeeder recordStatusSeeder;
+    private final InteractivityStateSeeder interactivityStateSeeder;
+    private final AnnounceTypeSeeder announceTypeSeeder;
+    private final AnnounceStatusSeeder announceStatusSeeder;
+    private final CategorySeeder categorySeeder;
 
-    public DatabaseSeeder(RoleRepository roleRepository) {
-        this.roleRepository = roleRepository;
+    public DatabaseSeeder(
+            RoleSeeder roleSeeder,
+            UserStatusSeeder userStatusSeeder,
+            RecordStatusSeeder recordStatusSeeder,
+            InteractivityStateSeeder interactivityStateSeeder,
+            AnnounceTypeSeeder announceTypeSeeder,
+            AnnounceStatusSeeder announceStatusSeeder,
+            CategorySeeder categorySeeder
+    ) {
+        this.roleSeeder = roleSeeder;
+        this.userStatusSeeder = userStatusSeeder;
+        this.recordStatusSeeder = recordStatusSeeder;
+        this.interactivityStateSeeder = interactivityStateSeeder;
+        this.announceTypeSeeder = announceTypeSeeder;
+        this.announceStatusSeeder = announceStatusSeeder;
+        this.categorySeeder = categorySeeder;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        this.fillRoles();
-    }
-    
-    private void fillRoles(){
-        for (AvailableRoles availableRole : AvailableRoles.values()) {
-            String roleName = availableRole.toString();
-            roleRepository.findByName(roleName)
-                    .orElseGet(() -> roleRepository.save(new Role(roleName)));
-        }
+        this.roleSeeder.fillRoles();
+        this.userStatusSeeder.fillUserStatus();
+        this.recordStatusSeeder.fillRecordStatus();
+        this.interactivityStateSeeder.fillInteractivityStates();
+        this.announceTypeSeeder.fillAnnounceTypes();
+        this.announceStatusSeeder.fillAnnounceStatus();
+        this.categorySeeder.fillDefaultCategories();
     }
 }
