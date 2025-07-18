@@ -1,4 +1,4 @@
-package com.example.finder.exception;
+package com.example.finder.exception.entity;
 
 public abstract class EntityNotFoundException extends RuntimeException {
     public EntityNotFoundException(String message) {

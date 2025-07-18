@@ -1,11 +1,8 @@
 package com.example.finder.repository;
 
-import com.example.finder.exception.RecordStatusNotFoundException;
-import com.example.finder.exception.UserStatusNotFoundException;
+import com.example.finder.exception.entity.RecordStatusNotFoundException;
 import com.example.finder.model.RecordStatus;
-import com.example.finder.model.UserStatus;
 import com.example.finder.model.enums.AvailableRecordStatus;
-import com.example.finder.model.enums.AvailableUserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.example.finder.exception;
+package com.example.finder.exception.entity;
 
 public class RecordStatusNotFoundException extends EntityNotFoundException {
   public RecordStatusNotFoundException(String message) {

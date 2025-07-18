@@ -2,7 +2,9 @@ package com.example.finder.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -10,8 +12,9 @@ import java.util.UUID;
 @Entity
 public class Discussion {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "UUID", updatable = false, nullable = false)
+    @GeneratedValue
+    @UuidGenerator
+    @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -1,8 +1,12 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.LoggedUserDto;
+import com.example.finder.dto.output.OtherUserDto;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
@@ -12,8 +16,9 @@ import java.util.UUID;
 @Entity
 public class AppUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "UUID", updatable = false, nullable = false)
+    @GeneratedValue
+    @UuidGenerator
+    @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
     @Column(name = "first_name", nullable = false, length = 30)
     private String firstName;
@@ -25,8 +30,8 @@ public class AppUser {
     private String email;
     @Column(nullable = false, length = 255)
     private String password;
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive;
+    @Column(name = "is_verified", nullable = false)
+    private boolean isVerified;
     @Column(name = "activation_token", nullable = true, length = 255)
     private String activationToken;
 
@@ -118,12 +123,12 @@ public class AppUser {
         this.password = password;
     }
 
-    public boolean getIsActive() {
-        return isActive;
+    public boolean getIsVerified() {
+        return isVerified;
     }
 
-    public void setIsActive(boolean active) {
-        isActive = active;
+    public void setIsVerified(boolean isVerified) {
+        this.isVerified = isVerified;
     }
 
     public String getActivationToken() {
@@ -180,5 +185,13 @@ public class AppUser {
 
     public void setRecordStatus(RecordStatus recordStatus) {
         this.recordStatus = recordStatus;
+    }
+
+    public LoggedUserDto toLoggedUserDto(){
+        return new LoggedUserDto(this);
+    }
+
+    public OtherUserDto toOtherUserDto(){
+        return new OtherUserDto(this);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.finder.repository;
 
-import com.example.finder.exception.RoleNotFoundException;
+import com.example.finder.exception.entity.RoleNotFoundException;
 import com.example.finder.model.Role;
 import com.example.finder.model.enums.AvailableRoles;
 import org.springframework.data.jpa.repository.JpaRepository;

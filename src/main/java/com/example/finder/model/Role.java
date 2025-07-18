@@ -1,13 +1,17 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.RoleDto;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.util.UUID;
 
 @Entity
 public class Role {
     @Id
     @GeneratedValue
-    @Column(columnDefinition = "UUID", updatable = false, nullable = false)
+    @UuidGenerator
+    @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
 
     @Column(name = "name", nullable = false, length = 30)
@@ -33,5 +37,9 @@ public class Role {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public RoleDto toDto(){
+        return new RoleDto(this);
     }
 }
