@@ -2,15 +2,20 @@ package com.example.finder.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 @Entity
 public class Message {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @UuidGenerator
+    @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
+    private UUID id;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -48,11 +53,11 @@ public class Message {
         this.content = content;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -120,13 +125,3 @@ public class Message {
         this.editedAt = editedAt;
     }
 }
-
-//id integer [primary key]
-//content text [not null]
-//discussion_id integer [not null]
-//index integer [not null]
-//author_id integer [not null]
-//record_status_id integer [not null]
-//is_reported boolean [not null, default:false]
-//created_at timestamp [not null, default:"now()"]
-//updated_at timestamp [default:"now()"]

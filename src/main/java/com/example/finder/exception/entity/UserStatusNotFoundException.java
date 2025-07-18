@@ -1,4 +1,4 @@
-package com.example.finder.exception;
+package com.example.finder.exception.entity;
 
 public class UserStatusNotFoundException extends EntityNotFoundException {
   public UserStatusNotFoundException(String message) {

@@ -1,11 +1,8 @@
 package com.example.finder.repository;
 
-import com.example.finder.exception.AnnounceStatusNotFoundException;
-import com.example.finder.exception.InteractivityStateNotFoundException;
+import com.example.finder.exception.entity.AnnounceStatusNotFoundException;
 import com.example.finder.model.AnnounceStatus;
-import com.example.finder.model.AnnounceType;
 import com.example.finder.model.enums.AvailableAnnounceStatus;
-import com.example.finder.model.enums.AvailableAnnounceTypes;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

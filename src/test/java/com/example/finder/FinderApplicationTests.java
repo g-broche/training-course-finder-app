@@ -9,18 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@TestPropertySource(properties = {
-		"spring.datasource.url=jdbc:h2:mem:context;DB_CLOSE_DELAY=-1"
-})
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@SpringBootTest(properties = "spring.profiles.active=test")
+@ActiveProfiles("test")
+@SpringBootTest
 class FinderApplicationTests {
 	@Autowired
 	RoleRepository roleRepository;
