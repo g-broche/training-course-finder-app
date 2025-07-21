@@ -3,6 +3,7 @@ package com.example.finder.utils.jwt;
 import com.example.finder.config.JwtProperties;
 import com.example.finder.model.AppUser;
 import com.example.finder.model.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -76,6 +77,14 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("id", Long.class);
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
 }
