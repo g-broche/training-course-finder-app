@@ -79,7 +79,8 @@ class AuthControllerTest {
                 "Doe",
                 "JohnD",
                 "john.doe@test.test",
-                "TestPassword1!"
+                "TestPassword1!",
+                true
         );
 
         MvcResult result = mockMvc.perform(post("/api/auth/signup")
