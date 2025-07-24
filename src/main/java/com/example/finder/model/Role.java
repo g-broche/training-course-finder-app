@@ -2,7 +2,10 @@ package com.example.finder.model;
 
 import com.example.finder.dto.output.RoleDto;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -11,6 +14,7 @@ public class Role {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
 
