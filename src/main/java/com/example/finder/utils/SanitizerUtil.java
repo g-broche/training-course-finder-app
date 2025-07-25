@@ -28,7 +28,8 @@ public class SanitizerUtil {
                 inputs.getLastName().trim(),
                 inputs.getDisplayName().trim(),
                 inputs.getEmail().trim(),
-                inputs.getPassword().trim()
+                inputs.getPassword().trim(),
+                inputs.getHasAcceptedGdpr()
         );
     }
 }

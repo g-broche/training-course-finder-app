@@ -26,7 +26,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> "ROLE_" + role.getName().toUpperCase())
-                .peek(roleName -> System.out.println(">>> role authority : " + roleName))
                 .map(SimpleGrantedAuthority::new)
                 .toList();
 

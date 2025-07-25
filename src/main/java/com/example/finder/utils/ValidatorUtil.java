@@ -22,31 +22,26 @@ public class ValidatorUtil {
     }
 
     public boolean isValidFirstName(String input) {
-        System.out.println(">>> firstName : "+input);
         if(input == null) {return false;}
         String trimmedInput = input.trim();
         return trimmedInput.matches(userNameRegex);
     }
     public boolean isValidLastName(String input) {
-        System.out.println(">>> lastName : "+input);
         if(input == null) {return false;}
         String trimmedInput = input.trim();
         return trimmedInput.matches(userNameRegex);
     }
     public boolean isValidDisplayName(String input) {
-        System.out.println(">>> displayName : "+input);
         if(input == null) {return false;}
         String trimmedInput = input.trim();
         return trimmedInput.matches(userNameRegex);
     }
     public boolean isValidEmail(String input) {
-        System.out.println(">>> email : "+input);
         if(input == null) {return false;}
         String trimmedInput = input.trim();
         return trimmedInput.matches(emailRegex);
     }
     public boolean isValidPassword(String input) {
-        System.out.println(">>> password : "+input);
         if(input == null) {return false;}
         return input.trim().length() >= passwordMin;
     }

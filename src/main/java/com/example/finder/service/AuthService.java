@@ -104,6 +104,7 @@ public class AuthService {
             String token = jwtUtil.generateToken(createdUser);
             return ApiResponseFactory.success(new JwtDto(token));
         } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
             return  ApiResponseFactory.internalError();
         }
     }
@@ -126,6 +127,7 @@ public class AuthService {
         } catch (AuthenticationException e) {
             return ApiResponseFactory.unauthorized(AuthError.INVALID_CREDENTIALS.getErrorMessage());
         } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
             return  ApiResponseFactory.internalError();
         }
     }

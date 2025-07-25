@@ -13,6 +13,16 @@ public class Printer {
             "trace", ">>>"
     );
 
+    public static void printLog(String message){
+        LocalDateTime logDate = LocalDateTime.now();
+        String log = StringUtil.concat(
+                logStarters.get("trace"),
+                logDate.toString(),
+                "->",
+                message);
+        System.out.println(log);
+    }
+
     public static void printErrorLog(Exception e){
         LocalDateTime logDate = LocalDateTime.now();
         String log = StringUtil.concat(

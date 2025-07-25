@@ -1,20 +1,13 @@
 package com.example.finder.dto.output;
 
 import com.example.finder.model.AppUser;
-import com.example.finder.model.RecordStatus;
 import com.example.finder.model.Role;
-import com.example.finder.model.UserStatus;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class LoggedUserDto {
+public class DetailedUserDto {
     private String firstName;
     private String lastName;
     private String displayName;
@@ -24,7 +17,7 @@ public class LoggedUserDto {
     private Timestamp createdAt;
     private Set<RoleDto> roles;
 
-    public LoggedUserDto(AppUser user){
+    public DetailedUserDto(AppUser user){
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.displayName = user.getDisplayName();
