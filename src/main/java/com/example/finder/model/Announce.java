@@ -1,15 +1,11 @@
 package com.example.finder.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.*;
+import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -17,6 +13,7 @@ public class Announce {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
     @Column(name = "title", nullable = false, length = 50)
@@ -28,6 +25,8 @@ public class Announce {
     private String photo;
     @Column(name = "city", nullable = false, length = 100)
     private String city;
+    @Column(name = "country", nullable = false, length = 50)
+    private String country;
     @Column(name = "latitude", nullable = true, length = 15)
     private String latitude;
     @Column(name = "longitude", nullable = true, length = 15)

@@ -3,10 +3,8 @@ package com.example.finder.model;
 import com.example.finder.dto.output.LoggedUserDto;
 import com.example.finder.dto.output.OtherUserDto;
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.*;
+import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
@@ -18,6 +16,7 @@ public class AppUser {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(updatable = false, nullable = false, columnDefinition = "CHAR(36)")
     private UUID id;
     @Column(name = "first_name", nullable = false, length = 30)
