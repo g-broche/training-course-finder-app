@@ -1,9 +1,6 @@
 package com.example.finder.controller;
 
 import com.example.finder.config.PaginationConfig;
-import com.example.finder.dto.input.RequestLogin;
-import com.example.finder.dto.input.RequestRegister;
-import com.example.finder.service.AuthService;
 import com.example.finder.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,19 +1,10 @@
 package com.example.finder.dto.input;
 
-import com.example.finder.model.*;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.io.File;
-import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.UUID;
 
 public class RequestAnnounce {
     private String title;
     private String description;
-    private File photo;
     private String city;
     private String country;
     private String latitude;
@@ -21,13 +12,14 @@ public class RequestAnnounce {
     private LocalDate relevantDate;
     private Long categoryId;
 
+
+
     public RequestAnnounce() {
     }
 
     public RequestAnnounce(
             String title,
             String description,
-            File photo,
             String city,
             String country,
             String latitude,
@@ -36,7 +28,6 @@ public class RequestAnnounce {
             Long categoryId) {
         this.title = title;
         this.description = description;
-        this.photo = photo;
         this.city = city;
         this.country = country;
         this.latitude = latitude;
@@ -59,14 +50,6 @@ public class RequestAnnounce {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public File getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(File photo) {
-        this.photo = photo;
     }
 
     public String getCity() {

@@ -1,7 +1,6 @@
 package com.example.finder.service;
 
 import com.example.finder.config.PaginationConfig;
-import com.example.finder.controller.UserController;
 import com.example.finder.dto.output.DetailedUserDto;
 import com.example.finder.exception.entity.UserNotFoundException;
 import com.example.finder.model.AppUser;
@@ -9,7 +8,7 @@ import com.example.finder.repository.AppUserRepository;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
 import com.example.finder.utils.SanitizerUtil;
-import com.example.finder.utils.ValidatorUtil;
+import com.example.finder.utils.validator.ValidatorUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -31,20 +30,20 @@ public class UserService {
     @Autowired
     private Environment environment;
     private final SanitizerUtil sanitizerUtil;
-    private final ValidatorUtil validatorUtil;
+    private final ValidatorUser validatorUser;
     private final AppUserRepository userRepository;
     private final PaginationConfig paginationConfig;
     private final AuthenticationManager authManager;
 
     public UserService(
             SanitizerUtil sanitizerUtil,
-            ValidatorUtil validatorUtil,
+            ValidatorUser validatorUser,
             AppUserRepository userRepository,
             PaginationConfig paginationConfig,
             AuthenticationManager authManager
     ) {
         this.sanitizerUtil = sanitizerUtil;
-        this.validatorUtil = validatorUtil;
+        this.validatorUser = validatorUser;
         this.userRepository = userRepository;
         this.paginationConfig = paginationConfig;
         this.authManager = authManager;
