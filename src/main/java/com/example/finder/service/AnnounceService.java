@@ -1,7 +1,9 @@
 package com.example.finder.service;
 
+import com.example.finder.config.PaginationConfig;
 import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.output.AnnounceDto;
+import com.example.finder.dto.output.DetailedUserDto;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.exception.action.InvalidRequestException;
 import com.example.finder.exception.entity.CategoryNotFoundException;
@@ -10,6 +12,7 @@ import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
 import com.example.finder.repository.*;
 import com.example.finder.response.ApiResponseFactory;
+import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.AnnounceError;
 import com.example.finder.response.enums.AuthError;
 import com.example.finder.utils.ImageUtil;
@@ -19,6 +22,10 @@ import com.example.finder.utils.logger.Printer;
 import com.example.finder.utils.validator.ValidatorAnnounce;
 import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorImage;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +48,7 @@ public class AnnounceService {
     private final ValidatorAnnounce validatorAnnounce;
     private final ValidatorImage validatorImage;
     private final ImageUtil imageUtil;
+    private final PaginationConfig paginationConfig;
 
     public AnnounceService(
             AnnounceRepository announceRepository,
@@ -53,7 +61,8 @@ public class AnnounceService {
             ValidatorAuth validatorAuth,
             ValidatorAnnounce validatorAnnounce,
             ValidatorImage validatorImage,
-            ImageUtil imageUtil
+            ImageUtil imageUtil,
+            PaginationConfig paginationConfig
     ) {
         this.announceRepository = announceRepository;
         this.announceTypeRepository = announceTypeRepository;
@@ -66,6 +75,24 @@ public class AnnounceService {
         this.validatorAnnounce = validatorAnnounce;
         this.validatorImage = validatorImage;
         this.imageUtil = imageUtil;
+        this.paginationConfig = paginationConfig;
+    }
+
+    public ResponseEntity<?> getPaginatedAnnounces(int page, int size) {
+        try {
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<Announce> announcePage = announceRepository.findAll(pageable);
+            Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> new AnnounceDto(
+                it,
+                imageUtil.getWebPathToPhoto(it.getPhoto())
+            )
+            );
+            var paginatedResult = PaginatedResponse.from(announceDtoPage);
+            return ApiResponseFactory.success(paginatedResult);
+        } catch (Exception e) {
+            return  ApiResponseFactory.internalError();
+        }
     }
 
     public ResponseEntity<?> createNewFoundAnnounce(
@@ -155,4 +182,5 @@ public class AnnounceService {
             }
         }
     }
+
 }

@@ -28,34 +28,42 @@ public class AnnounceController {
         this.announceService = announceService;
     }
 
-@PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> createNewFoundAnnounce(
-        @RequestParam("title") String title,
-        @RequestParam("description") String description,
-        @RequestParam("latitude") String latitude,
-        @RequestParam("longitude") String longitude,
-        @RequestParam("city") String city,
-        @RequestParam("country") String country,
-        @RequestParam("relevantDate") String relevantDate,
-        @RequestParam("categoryId") String categoryId,
-        @RequestParam("image") MultipartFile image
-) {
-    try {
-        RequestAnnounce requestAnnounce = new RequestAnnounce();
-        requestAnnounce.setTitle(title);
-        requestAnnounce.setDescription(description);
-        requestAnnounce.setLatitude(latitude);
-        requestAnnounce.setLongitude(longitude);
-        requestAnnounce.setCity(city);
-        requestAnnounce.setCountry(country);
-        requestAnnounce.setRelevantDate(LocalDate.parse(relevantDate));
-        requestAnnounce.setCategoryId(Long.valueOf(categoryId));
-
-        return announceService.createNewFoundAnnounce(requestAnnounce, image);
-
-    } catch (Exception e) {
-        Printer.printErrorLogWithDetails(e);
-        return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
+    @GetMapping("/paginated")
+    public ResponseEntity<?> getPaginatedUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        return announceService.getPaginatedAnnounces(page, size);
     }
-}
+
+    @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createNewFoundAnnounce(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("latitude") String latitude,
+            @RequestParam("longitude") String longitude,
+            @RequestParam("city") String city,
+            @RequestParam("country") String country,
+            @RequestParam("relevantDate") String relevantDate,
+            @RequestParam("categoryId") String categoryId,
+            @RequestParam("image") MultipartFile image
+    ) {
+        try {
+            RequestAnnounce requestAnnounce = new RequestAnnounce();
+            requestAnnounce.setTitle(title);
+            requestAnnounce.setDescription(description);
+            requestAnnounce.setLatitude(latitude);
+            requestAnnounce.setLongitude(longitude);
+            requestAnnounce.setCity(city);
+            requestAnnounce.setCountry(country);
+            requestAnnounce.setRelevantDate(LocalDate.parse(relevantDate));
+            requestAnnounce.setCategoryId(Long.valueOf(categoryId));
+
+            return announceService.createNewFoundAnnounce(requestAnnounce, image);
+
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
+        }
+    }
 }
