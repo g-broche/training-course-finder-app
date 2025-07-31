@@ -92,9 +92,6 @@ public class AuthService {
             List<ErrorDto> validationErrors = validatorUser.validateRegisterInputs(sanitizedRequest);
             boolean isRequestInvalid = !validationErrors.isEmpty();
             if (isRequestInvalid) {
-                for (ErrorDto errorDto : validationErrors){
-                    System.out.println(errorDto.getErrorMessage());
-                }
                 return ApiResponseFactory.badRequest(
                         AuthError.INVALID_REGISTER_DATA.getErrorMessage(),
                         validationErrors

@@ -27,4 +27,16 @@ public class StringUtil {
                 .toLowerCase();
         return slug;
     }
+
+    public static boolean isDouble(String input) {
+        if (input == null || input.isBlank()) {
+            return false;
+        }
+        try {
+            Double.parseDouble(input);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+    }
 }

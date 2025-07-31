@@ -2,6 +2,7 @@ package com.example.finder.service;
 
 import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.output.AnnounceDto;
+import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.exception.action.InvalidRequestException;
 import com.example.finder.exception.entity.CategoryNotFoundException;
 import com.example.finder.exception.entity.UserNotFoundException;
@@ -9,6 +10,8 @@ import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
 import com.example.finder.repository.*;
 import com.example.finder.response.ApiResponseFactory;
+import com.example.finder.response.enums.AnnounceError;
+import com.example.finder.response.enums.AuthError;
 import com.example.finder.utils.ImageUtil;
 import com.example.finder.utils.SanitizerUtil;
 import com.example.finder.utils.StringUtil;
@@ -80,6 +83,15 @@ public class AnnounceService {
 
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
+
+            RequestAnnounce sanitizedRequest = sanitizerUtil.sanitizeAnnounceInputs(request);
+            List<ErrorDto> validationErrors = validatorAnnounce.validateAnnounceInputs(sanitizedRequest);
+            if (!validationErrors.isEmpty()) {
+                return ApiResponseFactory.badRequest(
+                        AnnounceError.INVALID_CREATION_DATA.getErrorMessage(),
+                        validationErrors
+                );
+            }
 
             AnnounceType foundType = announceTypeRepository.getFoundAnnounceTypeOrThrow();
             AnnounceStatus unsolvedStatus = announceStatusRepository.getUnsolvedAnnounceStatusOrThrow();
