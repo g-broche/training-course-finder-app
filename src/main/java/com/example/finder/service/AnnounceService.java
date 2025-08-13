@@ -12,6 +12,7 @@ import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.repository.*;
+import com.example.finder.repository.specification.AnnounceSpecifications;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.AnnounceError;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AnnounceService {
@@ -81,18 +84,23 @@ public class AnnounceService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getPaginatedAnnounces(int page, int size, AvailableAnnounceTypes type) {
+    public ResponseEntity<?> getPaginatedAnnounces(int page,
+                                                   int size,
+                                                   AvailableAnnounceTypes type,
+                                                   String searchQuery,
+                                                   Long categoryId
+    ) {
         try {
+            AnnounceType announceTypeRequired = announceTypeRepository.findByName(type.getDisplayName()).orElse(null);
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            Page<Announce> announcePage;
-            // middle step used to allow switch in case of null given for announce type
-            String typeKey = (type == null) ? "ALL" : type.name();
-            announcePage = switch (typeKey) {
-                case "FOUND" -> announceRepository.findAllFoundAnnounces(pageable);
-                case "LOST" -> announceRepository.findAllLostAnnounces(pageable);
-                default -> announceRepository.findAll(pageable);
-            };
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasType(announceTypeRequired),
+                    AnnounceSpecifications.hasCategory(categoryId),
+                    AnnounceSpecifications.hasSearch(searchQuery)
+            );
+
+            Page<Announce> announcePage = announceRepository.findAll(spec, pageable);
             Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> {
                 String photoPath = it.getPhoto() != null && !it.getPhoto().isEmpty()
                     ? imageUtil.getWebPathToPhoto(it.getPhoto())

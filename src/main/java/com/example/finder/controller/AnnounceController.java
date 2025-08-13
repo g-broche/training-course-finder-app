@@ -34,15 +34,17 @@ public class AnnounceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size
     ) {
-        return announceService.getPaginatedAnnounces(page, size, null);
+        return announceService.getPaginatedAnnounces(page, size, null, null, null);
     }
 
     @GetMapping("/found/paginated")
     public ResponseEntity<?> getPaginatedFoundAnnounces(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId
     ) {
-        return announceService.getPaginatedAnnounces(page, size, AvailableAnnounceTypes.FOUND);
+        return announceService.getPaginatedAnnounces(page, size, AvailableAnnounceTypes.FOUND, search, categoryId);
     }
 
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

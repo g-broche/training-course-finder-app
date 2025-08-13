@@ -6,11 +6,12 @@ import com.example.finder.model.enums.AvailableAnnounceTypes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AnnounceRepository extends JpaRepository<Announce, UUID> {
+public interface AnnounceRepository extends JpaRepository<Announce, UUID>, JpaSpecificationExecutor<Announce> {
     List<Announce> findByAuthor(AppUser user);
 
     List<Announce> findAllByType_Name(String typeName);
