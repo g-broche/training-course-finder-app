@@ -85,7 +85,7 @@ public class Announce {
         this.city = city;
         this.country = country;
         this.latitude = latitude;
-        this.country = longitude;
+        this.longitude = longitude;
     }
 
     public UUID getId() {

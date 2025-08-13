@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface AnnounceTypeRepository extends JpaRepository<AnnounceType, Long> {
-    Optional<AnnounceType> findByName(String InteractivityStateName);
+    Optional<AnnounceType> findByName(String announceTypeName);
 
     default AnnounceType getFoundAnnounceTypeOrThrow() {
         return findByName(AvailableAnnounceTypes.FOUND.toString())

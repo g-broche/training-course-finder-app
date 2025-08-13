@@ -2,6 +2,7 @@ package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestRegister;
+import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.AuthService;
 import com.example.finder.utils.logger.Printer;
@@ -29,11 +30,19 @@ public class AnnounceController {
     }
 
     @GetMapping("/paginated")
-    public ResponseEntity<?> getPaginatedUsers(
+    public ResponseEntity<?> getPaginatedAnnounces(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size
     ) {
-        return announceService.getPaginatedAnnounces(page, size);
+        return announceService.getPaginatedAnnounces(page, size, null);
+    }
+
+    @GetMapping("/found/paginated")
+    public ResponseEntity<?> getPaginatedFoundAnnounces(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        return announceService.getPaginatedAnnounces(page, size, AvailableAnnounceTypes.FOUND);
     }
 
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

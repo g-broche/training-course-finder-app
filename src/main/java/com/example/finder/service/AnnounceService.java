@@ -10,6 +10,7 @@ import com.example.finder.exception.entity.CategoryNotFoundException;
 import com.example.finder.exception.entity.UserNotFoundException;
 import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
+import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.repository.*;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -78,19 +80,29 @@ public class AnnounceService {
         this.paginationConfig = paginationConfig;
     }
 
-    public ResponseEntity<?> getPaginatedAnnounces(int page, int size) {
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getPaginatedAnnounces(int page, int size, AvailableAnnounceTypes type) {
         try {
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            Page<Announce> announcePage = announceRepository.findAll(pageable);
-            Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> new AnnounceDto(
-                it,
-                imageUtil.getWebPathToPhoto(it.getPhoto())
-            )
-            );
+            Page<Announce> announcePage;
+            // middle step used to allow switch in case of null given for announce type
+            String typeKey = (type == null) ? "ALL" : type.name();
+            announcePage = switch (typeKey) {
+                case "FOUND" -> announceRepository.findAllFoundAnnounces(pageable);
+                case "LOST" -> announceRepository.findAllLostAnnounces(pageable);
+                default -> announceRepository.findAll(pageable);
+            };
+            Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> {
+                String photoPath = it.getPhoto() != null && !it.getPhoto().isEmpty()
+                    ? imageUtil.getWebPathToPhoto(it.getPhoto())
+                    : null;
+                return new AnnounceDto(it, photoPath);
+            });
             var paginatedResult = PaginatedResponse.from(announceDtoPage);
             return ApiResponseFactory.success(paginatedResult);
         } catch (Exception e) {
+            e.printStackTrace();
             return  ApiResponseFactory.internalError();
         }
     }

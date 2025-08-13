@@ -21,7 +21,6 @@ public class AnnounceDto {
     private String type;
     private OtherUserDto author;
     private String interactivityState;
-    private String recordStatus;
     private String status;
     private String category;
     private Timestamp createdAt;
@@ -37,10 +36,9 @@ public class AnnounceDto {
         this.latitude = announce.getLatitude();
         this.longitude = announce.getLongitude();
         this.relevantDate = announce.getRelevantDate();
-        this.type = announce.getStatus().getName();
+        this.type = announce.getType().getName();
         this.author = announce.getAuthor().toOtherUserDto();
         this.interactivityState = announce.getInteractivityState().getName();
-        this.recordStatus = announce.getRecordStatus().getName();
         this.status = announce.getStatus().getName();
         this.category = announce.getCategory().getName();
         this.createdAt = announce.getCreatedAt();
@@ -141,14 +139,6 @@ public class AnnounceDto {
 
     public void setInteractivityState(String interactivityState) {
         this.interactivityState = interactivityState;
-    }
-
-    public String getRecordStatus() {
-        return recordStatus;
-    }
-
-    public void setRecordStatus(String recordStatus) {
-        this.recordStatus = recordStatus;
     }
 
     public String getStatus() {
