@@ -26,11 +26,11 @@ public class AnnounceDto {
     private Timestamp createdAt;
     private Timestamp editedAt;
 
-    public AnnounceDto(Announce announce, String photoPath){
+    public AnnounceDto(Announce announce, String basePhotoPath){
         this.id = announce.getId().toString();
         this.title = announce.getTitle();
         this.description = announce.getDescription();
-        this.photo = photoPath;
+        this.photo = getPhotoPathIfExists(announce, basePhotoPath);
         this.city = announce.getCity();
         this.country = announce.getCountry();
         this.latitude = announce.getLatitude();
@@ -43,6 +43,12 @@ public class AnnounceDto {
         this.category = announce.getCategory().getName();
         this.createdAt = announce.getCreatedAt();
         this.editedAt = announce.getEditedAt();
+    }
+
+    private String getPhotoPathIfExists(Announce announce, String basePhotoPath){
+        return announce.getPhoto() != null && !announce.getPhoto().isEmpty()
+                ? basePhotoPath+announce.getPhoto()
+                : null;
     }
 
     public String getId() {

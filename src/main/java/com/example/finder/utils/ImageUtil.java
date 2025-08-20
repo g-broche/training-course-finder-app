@@ -52,6 +52,15 @@ public class ImageUtil {
         return imagePath;
     }
 
+    public String getBaseWebPathForPhotos() {
+        return StringUtil.concatJoined(
+                apiDomain,
+                "/",
+                photoDirectory,
+                "/"
+        );
+    }
+
     public String getWebPathToPhoto(String photoName) {
         return StringUtil.concatJoined(
                 apiDomain,

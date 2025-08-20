@@ -37,8 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class AnnounceService {
@@ -84,28 +83,57 @@ public class AnnounceService {
     }
 
     @Transactional(readOnly = true)
+    public ResponseEntity<?> getAnnounceDetail(UUID uuid, Boolean mustShowHidden){
+        try {
+            List<Specification<Announce>> specList = new ArrayList<>();
+            if(!mustShowHidden){
+                specList.add(AnnounceSpecifications.hasShownStatus());
+            }
+            Specification<Announce> spec = Specification.allOf(specList);
+            Announce foundAnnounce = announceRepository.findById(uuid).orElse(null);
+            if(foundAnnounce == null){
+                return ApiResponseFactory.notFound("No corresponding announce was found");
+            }
+            AnnounceDto announceDto = new AnnounceDto(
+                    foundAnnounce,
+                    imageUtil.getBaseWebPathForPhotos()
+            );
+            return ApiResponseFactory.success(announceDto);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getPaginatedAnnounces(int page,
                                                    int size,
                                                    AvailableAnnounceTypes type,
                                                    String searchQuery,
-                                                   Long categoryId
+                                                   Long categoryId,
+                                                   Boolean mustShowHidden
     ) {
         try {
             AnnounceType announceTypeRequired = announceTypeRepository.findByName(type.getDisplayName()).orElse(null);
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            Specification<Announce> spec = Specification.allOf(
-                    AnnounceSpecifications.hasType(announceTypeRequired),
-                    AnnounceSpecifications.hasCategory(categoryId),
-                    AnnounceSpecifications.hasSearch(searchQuery)
+            List<Specification<Announce>> specList = new ArrayList<>(
+                    Arrays.asList(
+                            AnnounceSpecifications.hasType(announceTypeRequired),
+                            AnnounceSpecifications.hasCategory(categoryId),
+                            AnnounceSpecifications.hasSearch(searchQuery)
+                    )
             );
+            if(!mustShowHidden){
+                specList.add(AnnounceSpecifications.hasShownStatus());
+            }
+            Specification<Announce> spec = Specification.allOf(specList);
 
             Page<Announce> announcePage = announceRepository.findAll(spec, pageable);
             Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> {
-                String photoPath = it.getPhoto() != null && !it.getPhoto().isEmpty()
-                    ? imageUtil.getWebPathToPhoto(it.getPhoto())
-                    : null;
-                return new AnnounceDto(it, photoPath);
+                return new AnnounceDto(
+                        it,
+                        imageUtil.getBaseWebPathForPhotos()
+                );
             });
             var paginatedResult = PaginatedResponse.from(announceDtoPage);
             return ApiResponseFactory.success(paginatedResult);

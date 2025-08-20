@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/announces")
@@ -29,12 +30,28 @@ public class AnnounceController {
         this.announceService = announceService;
     }
 
+    @GetMapping("/{uuid}")
+    public ResponseEntity<?> getAnnounceDetail(@PathVariable UUID uuid){
+        boolean mustHiddenRecordBeDisplayed = false;
+        return announceService.getAnnounceDetail(uuid, mustHiddenRecordBeDisplayed);
+    }
+
     @GetMapping("/paginated")
     public ResponseEntity<?> getPaginatedAnnounces(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId
     ) {
-        return announceService.getPaginatedAnnounces(page, size, null, null, null);
+        AvailableAnnounceTypes typeFilter = null;
+        boolean mustHiddenRecordBeDisplayed = false;
+        return announceService.getPaginatedAnnounces(
+                page,
+                size,
+                typeFilter,
+                search,
+                categoryId,
+                mustHiddenRecordBeDisplayed);
     }
 
     @GetMapping("/found/paginated")
@@ -44,7 +61,15 @@ public class AnnounceController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId
     ) {
-        return announceService.getPaginatedAnnounces(page, size, AvailableAnnounceTypes.FOUND, search, categoryId);
+        boolean mustHiddenRecordBeDisplayed = false;
+        return announceService.getPaginatedAnnounces(
+                page,
+                size,
+                AvailableAnnounceTypes.FOUND,
+                search,
+                categoryId,
+                mustHiddenRecordBeDisplayed
+        );
     }
 
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
