@@ -19,7 +19,7 @@ import com.example.finder.repository.UserStatusRepository;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.utils.ActivationTokenUtil;
 import com.example.finder.utils.SanitizerUtil;
-import com.example.finder.utils.ValidatorUtil;
+import com.example.finder.utils.validator.ValidatorUser;
 import com.example.finder.utils.jwt.JwtUtil;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class AuthService {
     @Autowired
     private Environment environment;
     private final SanitizerUtil sanitizerUtil;
-    private final ValidatorUtil validatorUtil;
+    private final ValidatorUser validatorUser;
     private final AppUserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserStatusRepository userStatusRepository;
@@ -54,7 +54,7 @@ public class AuthService {
 
     public AuthService(
             SanitizerUtil sanitizerUtil,
-            ValidatorUtil validatorUtil,
+            ValidatorUser validatorUser,
             AppUserRepository userRepository,
             RoleRepository roleRepository,
             UserStatusRepository userStatusRepository,
@@ -64,7 +64,7 @@ public class AuthService {
             JwtUtil jwtUtil
     ) {
         this.sanitizerUtil = sanitizerUtil;
-        this.validatorUtil = validatorUtil;
+        this.validatorUser = validatorUser;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userStatusRepository = userStatusRepository;
@@ -89,12 +89,9 @@ public class AuthService {
                 );
             }
             RequestRegister sanitizedRequest = sanitizerUtil.sanitizeRegisterInputs(registerData);
-            List<ErrorDto> validationErrors = validatorUtil.validateRegisterInputs(sanitizedRequest);
+            List<ErrorDto> validationErrors = validatorUser.validateRegisterInputs(sanitizedRequest);
             boolean isRequestInvalid = !validationErrors.isEmpty();
             if (isRequestInvalid) {
-                for (ErrorDto errorDto : validationErrors){
-                    System.out.println(errorDto.getErrorMessage());
-                }
                 return ApiResponseFactory.badRequest(
                         AuthError.INVALID_REGISTER_DATA.getErrorMessage(),
                         validationErrors

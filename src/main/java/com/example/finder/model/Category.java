@@ -1,5 +1,7 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.CategoryDto;
+import com.example.finder.dto.output.RoleDto;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -33,5 +35,9 @@ public class Category {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CategoryDto toDto(){
+        return new CategoryDto(this);
     }
 }

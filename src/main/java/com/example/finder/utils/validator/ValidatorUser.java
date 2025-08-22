@@ -1,4 +1,4 @@
-package com.example.finder.utils;
+package com.example.finder.utils.validator;
 
 import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.dto.output.ErrorDto;
@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class ValidatorUtil {
+public class ValidatorUser {
     private final int UserNameMin = 1;
     private final int UserNameMax = 30;
     private final int passwordMin = 8;
     private String userNameRegex;
     private final String emailRegex = "^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,4}$";
 
-    ValidatorUtil(){
+    ValidatorUser(){
         // using %d has an integer positional format specifier for placeholder to
         // replace by two following variables when building the string
         this.userNameRegex = String.format("^[\\p{L} .'-]{%d,%d}$", UserNameMin, UserNameMax);

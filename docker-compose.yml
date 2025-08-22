@@ -28,6 +28,9 @@ services:
       BACK_OFFICE_ORIGIN: ${BACK_OFFICE_ORIGIN}
     ports:
       - "${API_PORT}:${API_PORT}"
+    volumes:
+      - uploads_data:/app/uploads
 
 volumes:
   postgres_data:
+  uploads_data:

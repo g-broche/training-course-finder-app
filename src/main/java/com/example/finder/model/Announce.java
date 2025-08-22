@@ -1,13 +1,12 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.AnnounceDto;
 import jakarta.persistence.*;
 import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -27,9 +26,11 @@ public class Announce {
     private String photo;
     @Column(name = "city", nullable = false, length = 100)
     private String city;
-    @Column(name = "latitude", nullable = true, length = 15)
+    @Column(name = "country", nullable = false, length = 50)
+    private String country;
+    @Column(name = "latitude", nullable = true, length = 30)
     private String latitude;
-    @Column(name = "longitude", nullable = true, length = 15)
+    @Column(name = "longitude", nullable = true, length = 30)
     private String longitude;
     @Column(name = "relevant_date", nullable = true)
     private LocalDate relevantDate;
@@ -51,6 +52,10 @@ public class Announce {
     private RecordStatus recordStatus;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "status_id", nullable = false)
+    private AnnounceStatus status;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
@@ -65,11 +70,22 @@ public class Announce {
     public Announce() {
 
     }
-    public Announce(String title, String description, LocalDate relevantDate, String city) {
+    public Announce(
+            String title,
+            String description,
+            LocalDate relevantDate,
+            String city,
+            String country,
+            String latitude,
+            String longitude
+    ) {
         this.title = title;
         this.description = description;
         this.relevantDate = relevantDate;
         this.city = city;
+        this.country = country;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public UUID getId() {
@@ -104,6 +120,10 @@ public class Announce {
         this.photo = photo;
     }
 
+    public String getCountry() { return country; }
+
+    public void setCountry(String country) { this.country = country; }
+
     public String getCity() {
         return city;
     }
@@ -135,6 +155,11 @@ public class Announce {
     public void setRelevantDate(LocalDate relevantDate) {
         this.relevantDate = relevantDate;
     }
+
+
+    public AnnounceStatus getStatus() { return status; }
+
+    public void setStatus(AnnounceStatus status) { this.status = status; }
 
     public AnnounceType getType() {
         return type;

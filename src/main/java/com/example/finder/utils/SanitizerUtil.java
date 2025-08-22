@@ -1,8 +1,11 @@
 package com.example.finder.utils;
 
+import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestRegister;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
 
 @Component
 public class SanitizerUtil {
@@ -24,12 +27,25 @@ public class SanitizerUtil {
      */
     public RequestRegister sanitizeRegisterInputs(RequestRegister inputs){
         return new RequestRegister(
-                inputs.getFirstName().trim(),
-                inputs.getLastName().trim(),
-                inputs.getDisplayName().trim(),
+                sanitizeForHtml(inputs.getFirstName().trim()),
+                sanitizeForHtml(inputs.getLastName().trim()),
+                sanitizeForHtml(inputs.getDisplayName().trim()),
                 inputs.getEmail().trim(),
                 inputs.getPassword().trim(),
                 inputs.getHasAcceptedGdpr()
+        );
+    }
+
+    public RequestAnnounce sanitizeAnnounceInputs(RequestAnnounce inputs){
+        return new RequestAnnounce(
+                sanitizeForHtml(inputs.getTitle().trim()),
+                sanitizeForHtml(inputs.getDescription().trim()),
+                sanitizeForHtml(inputs.getCity().trim()),
+                sanitizeForHtml(inputs.getCountry().trim()),
+                sanitizeForHtml(inputs.getLatitude().trim()),
+                sanitizeForHtml(inputs.getLongitude().trim()),
+                inputs.getRelevantDate(),
+                inputs.getCategoryId()
         );
     }
 }

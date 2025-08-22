@@ -3,7 +3,6 @@ package com.example.finder.model;
 import com.example.finder.dto.output.RoleDto;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
