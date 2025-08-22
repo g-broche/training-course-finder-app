@@ -1,20 +1,14 @@
 package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
-import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.service.AnnounceService;
-import com.example.finder.service.AuthService;
 import com.example.finder.utils.logger.Printer;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.UUID;
 

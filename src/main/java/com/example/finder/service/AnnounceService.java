@@ -82,6 +82,13 @@ public class AnnounceService {
         this.paginationConfig = paginationConfig;
     }
 
+    /**
+     * Get data related to a specific announce and creates an api response from it
+     * @param uuid id of announce
+     * @param mustShowHidden if false only gets an announce with a record status of shown,
+     *                       if true return an announce as long as it exists (admin)
+     * @return api response with the relevant data
+     */
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAnnounceDetail(UUID uuid, Boolean mustShowHidden){
         try {
@@ -104,25 +111,41 @@ public class AnnounceService {
         }
     }
 
+    /**
+     * get page of announces depending on given arguments and returns the data in a ApiResponse
+     * @param page page to get
+     * @param size amount of announces per page
+     * @param type AvailableAnnounceType value for filter between Found, Lost or pass null for both
+     * @param searchQuery filter announces to match the search query if it exists
+     * @param categoryId filter announces by a category if categoryId is not null
+     * @param mustShowHidden false only get announces with a record status of Shown, true doesn't
+     *                       filter based on such status (intended for admin board)
+     * @return api response with data according the the given parameters
+     */
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getPaginatedAnnounces(int page,
-                                                   int size,
-                                                   AvailableAnnounceTypes type,
-                                                   String searchQuery,
-                                                   Long categoryId,
-                                                   Boolean mustShowHidden
+    public ResponseEntity<?> getPaginatedAnnounces(
+            int page,
+            int size,
+            AvailableAnnounceTypes type,
+            String searchQuery,
+            Long categoryId,
+            Boolean mustShowHidden
     ) {
         try {
-            AnnounceType announceTypeRequired = announceTypeRepository.findByName(type.getDisplayName()).orElse(null);
+            AnnounceType announceTypeRequired = type != null
+                ? announceTypeRepository.findByName(type.getDisplayName()).orElse(null)
+                : null;
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             List<Specification<Announce>> specList = new ArrayList<>(
                     Arrays.asList(
-                            AnnounceSpecifications.hasType(announceTypeRequired),
                             AnnounceSpecifications.hasCategory(categoryId),
                             AnnounceSpecifications.hasSearch(searchQuery)
                     )
             );
+            if(announceTypeRequired != null){
+                specList.add(AnnounceSpecifications.hasType(announceTypeRequired));
+            }
             if(!mustShowHidden){
                 specList.add(AnnounceSpecifications.hasShownStatus());
             }
@@ -143,6 +166,12 @@ public class AnnounceService {
         }
     }
 
+    /**
+     * Create a new found object announce
+     * @param request data related to the announce
+     * @param receivedImage image provided for the item
+     * @return api response with DTO representation of the created announce
+     */
     public ResponseEntity<?> createNewFoundAnnounce(
             RequestAnnounce request,
             MultipartFile receivedImage
