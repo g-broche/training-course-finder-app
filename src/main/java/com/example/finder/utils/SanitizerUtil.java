@@ -1,6 +1,7 @@
 package com.example.finder.utils;
 
 import com.example.finder.dto.input.RequestAnnounce;
+import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestRegister;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.stereotype.Component;
@@ -46,6 +47,12 @@ public class SanitizerUtil {
                 sanitizeForHtml(inputs.getLongitude().trim()),
                 inputs.getRelevantDate(),
                 inputs.getCategoryId()
+        );
+    }
+
+    public RequestDiscussion sanitizeDiscussionInputs(RequestDiscussion inputs){
+        return new RequestDiscussion(
+                sanitizeForHtml(inputs.getMessage().trim())
         );
     }
 }

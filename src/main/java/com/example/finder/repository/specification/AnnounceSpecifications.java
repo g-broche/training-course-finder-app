@@ -5,6 +5,8 @@ import com.example.finder.model.AnnounceType;
 import com.example.finder.model.enums.AvailableRecordStatus;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.UUID;
+
 public class AnnounceSpecifications {
 
     public static Specification<Announce> hasType(AnnounceType type) {
@@ -30,6 +32,20 @@ public class AnnounceSpecifications {
                 cb.equal(
                         root.get("recordStatus").get("name"),
                         AvailableRecordStatus.SHOWN.toString()
+                );
+    }
+    public static Specification<Announce> hasAuthor(UUID authorId) {
+        return (root, query, cb) ->
+                cb.equal(
+                        root.get("author").get("id"),
+                        authorId
+                );
+    }
+    public static Specification<Announce> hasId(UUID announceId) {
+        return (root, query, cb) ->
+                cb.equal(
+                        root.get("id"),
+                        announceId
                 );
     }
 }

@@ -1,8 +1,10 @@
 package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
+import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.service.AnnounceService;
+import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +19,14 @@ import java.util.UUID;
 public class AnnounceController {
 
     private final AnnounceService announceService;
+    private final DiscussionService discussionService;
 
     public AnnounceController(
-            AnnounceService announceService
+            AnnounceService announceService,
+            DiscussionService discussionService
     ) {
         this.announceService = announceService;
+        this.discussionService = discussionService;
     }
 
     @GetMapping("/{uuid}")
@@ -96,4 +101,24 @@ public class AnnounceController {
             return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
         }
     }
+
+    @PostMapping("/{uuid}/discussions/new")
+    public ResponseEntity<?> createNewDiscussion(
+            @PathVariable UUID uuid,
+            @RequestBody RequestDiscussion request){
+        boolean mustHiddenRecordBeDisplayed = false;
+        return discussionService.createNewDiscussion(uuid, request);
+    }
+
+//    @GetMapping("/{uuid}/discussions")
+//    public ResponseEntity<?> getDiscussions(@PathVariable UUID uuid){
+//        boolean mustHiddenRecordBeDisplayed = false;
+//        return discussionService.getAnnounceDiscussions(uuid);
+//    }
+//
+//    @GetMapping("/{uuid}/discussions/private")
+//    public ResponseEntity<?> getDiscussionDetails(@PathVariable UUID uuid){
+//        boolean mustHiddenRecordBeDisplayed = false;
+//        return discussionService.getDiscussionDetails(uuid);
+//    }
 }
