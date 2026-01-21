@@ -3,6 +3,8 @@ package com.example.finder.repository.specification;
 import com.example.finder.model.Announce;
 import com.example.finder.model.AnnounceType;
 import com.example.finder.model.Discussion;
+import com.example.finder.model.enums.AvailableRecordStatus;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.UUID;
@@ -36,5 +38,11 @@ public class DiscussionSpecifications {
                 return (root, query, cb) -> cb.or(
                                 cb.equal(root.get("announce").get("author").get("id"), userId),
                                 cb.equal(root.get("interlocutor").get("id"), userId));
+        }
+
+        public static Specification<Discussion> mustHaveVisibleAnnounce() {
+                return (root, query, cb) -> cb.equal(
+                                root.get("announce").get("recordStatus").get("name"),
+                                AvailableRecordStatus.SHOWN.toString());
         }
 }

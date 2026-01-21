@@ -8,6 +8,7 @@ import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,14 +24,13 @@ public class AnnounceController {
 
     public AnnounceController(
             AnnounceService announceService,
-            DiscussionService discussionService
-    ) {
+            DiscussionService discussionService) {
         this.announceService = announceService;
         this.discussionService = discussionService;
     }
 
     @GetMapping("/{uuid}")
-    public ResponseEntity<?> getAnnounceDetail(@PathVariable UUID uuid){
+    public ResponseEntity<?> getAnnounceDetail(@PathVariable UUID uuid) {
         boolean mustHiddenRecordBeDisplayed = false;
         return announceService.getAnnounceDetail(uuid, mustHiddenRecordBeDisplayed);
     }
@@ -40,8 +40,7 @@ public class AnnounceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId
-    ) {
+            @RequestParam(required = false) Long categoryId) {
         AvailableAnnounceTypes typeFilter = null;
         boolean mustHiddenRecordBeDisplayed = false;
         return announceService.getPaginatedAnnounces(
@@ -58,8 +57,7 @@ public class AnnounceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId
-    ) {
+            @RequestParam(required = false) Long categoryId) {
         boolean mustHiddenRecordBeDisplayed = false;
         return announceService.getPaginatedAnnounces(
                 page,
@@ -67,8 +65,7 @@ public class AnnounceController {
                 AvailableAnnounceTypes.FOUND,
                 search,
                 categoryId,
-                mustHiddenRecordBeDisplayed
-        );
+                mustHiddenRecordBeDisplayed);
     }
 
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -81,8 +78,7 @@ public class AnnounceController {
             @RequestParam("country") String country,
             @RequestParam("relevantDate") String relevantDate,
             @RequestParam("categoryId") String categoryId,
-            @RequestParam("image") MultipartFile image
-    ) {
+            @RequestParam("image") MultipartFile image) {
         try {
             RequestAnnounce requestAnnounce = new RequestAnnounce();
             requestAnnounce.setTitle(title);
@@ -103,22 +99,24 @@ public class AnnounceController {
     }
 
     @PostMapping("/{uuid}/discussions/new")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createNewDiscussion(
             @PathVariable UUID uuid,
-            @RequestBody RequestDiscussion request){
-        boolean mustHiddenRecordBeDisplayed = false;
+            @RequestBody RequestDiscussion request) {
         return discussionService.createNewDiscussion(uuid, request);
     }
 
-//    @GetMapping("/{uuid}/discussions")
-//    public ResponseEntity<?> getDiscussions(@PathVariable UUID uuid){
-//        boolean mustHiddenRecordBeDisplayed = false;
-//        return discussionService.getAnnounceDiscussions(uuid);
-//    }
-//
-//    @GetMapping("/{uuid}/discussions/private")
-//    public ResponseEntity<?> getDiscussionDetails(@PathVariable UUID uuid){
-//        boolean mustHiddenRecordBeDisplayed = false;
-//        return discussionService.getDiscussionDetails(uuid);
-//    }
+    @GetMapping("/{uuid}/discussions")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getDiscussions(@PathVariable UUID uuid) {
+        boolean withHiddenAnnounce = false;
+        return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
+    }
+
+    //
+    // @GetMapping("/{uuid}/discussions/private")
+    // public ResponseEntity<?> getDiscussionDetails(@PathVariable UUID uuid){
+    // boolean mustHiddenRecordBeDisplayed = false;
+    // return discussionService.getDiscussionDetails(uuid);
+    // }
 }

@@ -1,44 +1,25 @@
 package com.example.finder.service;
 
-import com.example.finder.config.PaginationConfig;
-import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestDiscussion;
-import com.example.finder.dto.output.AnnounceDto;
 import com.example.finder.dto.output.ErrorDto;
-import com.example.finder.exception.action.InvalidRequestException;
-import com.example.finder.exception.entity.CategoryNotFoundException;
-import com.example.finder.exception.entity.UserNotFoundException;
-import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
-import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
 import com.example.finder.repository.specification.DiscussionSpecifications;
 import com.example.finder.response.ApiResponseFactory;
-import com.example.finder.response.PaginatedResponse;
-import com.example.finder.response.enums.AnnounceError;
 import com.example.finder.response.enums.DiscussionError;
-import com.example.finder.utils.ImageUtil;
 import com.example.finder.utils.SanitizerUtil;
-import com.example.finder.utils.StringUtil;
-import com.example.finder.utils.logger.Printer;
-import com.example.finder.utils.validator.ValidatorAnnounce;
 import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorDiscussionMessage;
-import com.example.finder.utils.validator.ValidatorImage;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,47 +28,29 @@ public class DiscussionService {
     private final DiscussionRepository discussionRepository;
     private final MessageRepository messageRepository;
     private final AnnounceRepository announceRepository;
-    private final AnnounceTypeRepository announceTypeRepository;
-    private final AnnounceStatusRepository announceStatusRepository;
-    private final CategoryRepository categoryRepository;
     private final InteractivityStateRepository interactivityStateRepository;
     private final RecordStatusRepository recordStatusRepository;
     private final SanitizerUtil sanitizerUtil;
     private final ValidatorAuth validatorAuth;
     private final ValidatorDiscussionMessage validatorDiscussionMessage;
-    private final ValidatorImage validatorImage;
-    private final ImageUtil imageUtil;
-    private final PaginationConfig paginationConfig;
 
     public DiscussionService(
             AnnounceRepository announceRepository,
             DiscussionRepository discussionRepository,
             MessageRepository messageRepository,
-            AnnounceTypeRepository announceTypeRepository,
-            AnnounceStatusRepository announceStatusRepository,
-            CategoryRepository categoryRepository,
             InteractivityStateRepository interactivityStateRepository,
             RecordStatusRepository recordStatusRepository,
             SanitizerUtil sanitizerUtil,
             ValidatorAuth validatorAuth,
-            ValidatorDiscussionMessage validatorDiscussionMessage,
-            ValidatorImage validatorImage,
-            ImageUtil imageUtil,
-            PaginationConfig paginationConfig) {
+            ValidatorDiscussionMessage validatorDiscussionMessage) {
         this.discussionRepository = discussionRepository;
         this.announceRepository = announceRepository;
         this.messageRepository = messageRepository;
-        this.announceTypeRepository = announceTypeRepository;
-        this.announceStatusRepository = announceStatusRepository;
-        this.categoryRepository = categoryRepository;
         this.interactivityStateRepository = interactivityStateRepository;
         this.recordStatusRepository = recordStatusRepository;
         this.sanitizerUtil = sanitizerUtil;
         this.validatorAuth = validatorAuth;
         this.validatorDiscussionMessage = validatorDiscussionMessage;
-        this.validatorImage = validatorImage;
-        this.imageUtil = imageUtil;
-        this.paginationConfig = paginationConfig;
     }
 
     @Transactional
@@ -142,12 +105,42 @@ public class DiscussionService {
         }
     }
 
-    public ResponseEntity<?> getDiscussion(UUID uuid) {
+    public ResponseEntity<?> getAnnounceDiscussions(
+            UUID uuid,
+            boolean withHiddenAnnounce) {
+        try {
+
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            List<Specification<Discussion>> specList = new ArrayList<>(
+                    Arrays.asList(
+                            DiscussionSpecifications.hasAnnounce(uuid),
+                            DiscussionSpecifications.hasParticipant(requester.getId())));
+            if (!withHiddenAnnounce) {
+                specList.add(DiscussionSpecifications.mustHaveVisibleAnnounce());
+            }
+            Specification<Discussion> spec = Specification.allOf(specList);
+            List<Discussion> discussions = discussionRepository.findAll(spec);
+
+            return ApiResponseFactory.success(
+                    discussions
+                            .stream()
+                            .map(Discussion::toDetailedDiscussionDTO)
+                            .toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
+    public ResponseEntity<?> getDiscussion(UUID uuid, boolean withHiddenAnnounce) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
             Specification<Discussion> spec = Specification.allOf(
                     DiscussionSpecifications.hasId(uuid),
                     DiscussionSpecifications.hasParticipant(requester.getId()));
+            if (!withHiddenAnnounce) {
+                spec = spec.and(DiscussionSpecifications.mustHaveVisibleAnnounce());
+            }
 
             Discussion discussion = discussionRepository.findOne(spec).orElse(null);
             if (discussion == null) {
