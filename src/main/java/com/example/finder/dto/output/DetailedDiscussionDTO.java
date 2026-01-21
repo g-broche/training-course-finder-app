@@ -28,8 +28,43 @@ public class DetailedDiscussionDTO {
         this.announceAuthor = new OtherUserDto(discussion.getAnnounce().getAuthor());
         this.announceResponder = new OtherUserDto(discussion.getInterlocutor());
         this.interactivityStateName = discussion.getInteractivityState().getName();
-        this.messages = discussion.getMessages().stream().map(Message::toDto).toList();
+        this.messages = discussion.getMessages().stream()
+                .sorted((m1, m2) -> Integer.compare(m1.getIndex(), m2.getIndex()))
+                .map(Message::toDto)
+                .toList();
         this.createdAt = discussion.getCreatedAt();
         this.editedAt = discussion.getEditedAt();
+    }
+
+    public UUID getDiscussionId() {
+        return discussionId;
+    }
+
+    public UUID getAnnounceId() {
+        return announceId;
+    }
+
+    public OtherUserDto getAnnounceAuthor() {
+        return announceAuthor;
+    }
+
+    public OtherUserDto getAnnounceResponder() {
+        return announceResponder;
+    }
+
+    public String getInteractivityStateName() {
+        return interactivityStateName;
+    }
+
+    public List<MessageDTO> getMessages() {
+        return messages;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public Timestamp getEditedAt() {
+        return editedAt;
     }
 }

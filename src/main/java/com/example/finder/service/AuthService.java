@@ -33,6 +33,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
 import java.util.Set;
@@ -81,6 +82,7 @@ public class AuthService {
      * @param registerData data provided to create the new user
      * @return Response entity corresponding to the result of the request
      */
+    @Transactional
     public ResponseEntity<?> registerNewUser(RequestRegister registerData) {
         try {
             if (userRepository.existsByEmail(registerData.getEmail())) {
@@ -88,6 +90,7 @@ public class AuthService {
                         AuthError.EMAIL_ALREADY_USED.getErrorMessage()
                 );
             }
+            // sanitize and validate request
             RequestRegister sanitizedRequest = sanitizerUtil.sanitizeRegisterInputs(registerData);
             List<ErrorDto> validationErrors = validatorUser.validateRegisterInputs(sanitizedRequest);
             boolean isRequestInvalid = !validationErrors.isEmpty();
@@ -97,10 +100,12 @@ public class AuthService {
                         validationErrors
                 );
             }
+            // create new user, create a token with the user safe data and return it in the response
             AppUser createdUser = createNewUserFromData(registerData);
             String token = jwtUtil.generateToken(createdUser);
             return ApiResponseFactory.success(new JwtDto(token));
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
             return  ApiResponseFactory.internalError();
         }
@@ -114,10 +119,12 @@ public class AuthService {
      */
     public ResponseEntity<?> logUser(RequestLogin request) {
         try {
+            // check for user with matching credentials
             Authentication auth = authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
+            // get user data from user details en return a token containing safe data
             AppUser user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
             String token = jwtUtil.generateToken(user);
             return ApiResponseFactory.success(new JwtDto(token));
@@ -164,6 +171,7 @@ public class AuthService {
         Set<String> existingTokens = userRepository.findAllNonNullActivationTokens();
         String activationToken = ActivationTokenUtil.generateToken();
         boolean mustCreateToken = true;
+        // infinite loop prevention
         int maxAttempts = 10;
         int currentAttempt = 1;
         // prevent collision with other users existing token
@@ -175,6 +183,7 @@ public class AuthService {
                 activationToken = ActivationTokenUtil.generateToken();
             }
         }
+        // if broke out of the loop without a validation token generated throw exception
         if (mustCreateToken) {
             throw new ActivationTokenGenerationException();
         }
@@ -194,14 +203,19 @@ public class AuthService {
         newUser.setEmail(registerData.getEmail());
         newUser.setPassword(passwordEncoder.encode(registerData.getPassword()));
 
+        // get default relations to attribute
         Role userRole = roleRepository.getUserRoleOrThrow();
         newUser.setRoles(Set.of(userRole));
-        String activationToken = generateRegistrationToken();
-        newUser.setActivationToken(activationToken);
         UserStatus defaultStatus = userStatusRepository.getAllowedUserStatusOrThrow();
         newUser.setUserStatus(defaultStatus);
         RecordStatus defaultRecordStatus = recordStatusRepository.getShownRecordStatusOrThrow();
         newUser.setRecordStatus(defaultRecordStatus);
+
+        // generate and attribute a registration token for email validation
+        String activationToken = generateRegistrationToken();
+        newUser.setActivationToken(activationToken);
+
+        // persist new user in database and returns it while making sure it was created
         userRepository.save(newUser);
         return userRepository.findByEmail(newUser.getEmail())
                 .orElseThrow(UserNotCreatedException::new);

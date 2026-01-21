@@ -20,14 +20,12 @@ public class DiscussionController {
     private final DiscussionService discussionService;
 
     public DiscussionController(
-            DiscussionService discussionService
-    ) {
+            DiscussionService discussionService) {
         this.discussionService = discussionService;
     }
 
     @GetMapping("/{uuid}")
-    public ResponseEntity<?> getDiscussion(@PathVariable UUID uuid){
-        boolean mustHiddenRecordBeDisplayed = false;
-        return discussionService.getDiscussion(uuid, mustHiddenRecordBeDisplayed);
+    public ResponseEntity<?> getDiscussion(@PathVariable UUID uuid) {
+        return discussionService.getDiscussion(uuid);
     }
 }

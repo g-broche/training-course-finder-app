@@ -26,7 +26,6 @@ public class AnnounceSpecifications {
                 ? cb.conjunction()
                 : cb.like(cb.lower(root.get("title")), "%" + search.toLowerCase() + "%");
     }
-
     public static Specification<Announce> hasShownStatus() {
         return (root, query, cb) ->
                 cb.equal(

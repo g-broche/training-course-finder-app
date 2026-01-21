@@ -15,8 +15,14 @@ public class ValidatorAuth {
         this.appUserRepository = appUserRepository;
     }
 
-    public AppUser getUserFromSecurityContext(){
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public AppUser getUserFromSecurityContext() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!(principal instanceof UserDetails)) {
+            throw new UserNotFoundException();
+        }
+
+        UserDetails userDetails = (UserDetails) principal;
         String email = userDetails.getUsername();
 
         return appUserRepository.findByEmail(email)

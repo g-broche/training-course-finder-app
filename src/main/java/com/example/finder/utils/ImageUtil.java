@@ -28,8 +28,7 @@ public class ImageUtil {
     @Autowired
     public ImageUtil(
             @Value("${api.domain}") String apiDomain,
-            @Value("${photo.public.path}") String photoDirectory
-    ) {
+            @Value("${photo.public.path}") String photoDirectory) {
         this.apiDomain = apiDomain;
         this.photoDirectory = photoDirectory;
     }
@@ -41,12 +40,11 @@ public class ImageUtil {
         registry.registerServiceProvider(new WebPImageReaderSpi());
     }
 
-
     public String getPhotoDirectory() {
         return photoDirectory;
     }
 
-    public Path getLocalImagePath(String imageName){
+    public Path getLocalImagePath(String imageName) {
         Path dir = Paths.get(photoDirectory);
         Path imagePath = dir.resolve(imageName);
         return imagePath;
@@ -57,8 +55,7 @@ public class ImageUtil {
                 apiDomain,
                 "/",
                 photoDirectory,
-                "/"
-        );
+                "/");
     }
 
     public String getWebPathToPhoto(String photoName) {
@@ -67,18 +64,16 @@ public class ImageUtil {
                 "/",
                 photoDirectory,
                 "/",
-                photoName
-        );
+                photoName);
     }
 
     public static String createImageName(
             AnnounceType announceType,
-            Category category
-    ) throws Exception{
-        if(announceType == null){
+            Category category) throws Exception {
+        if (announceType == null) {
             throw new Exception("Announce type can't be null when generating an image name");
         }
-        if(category == null){
+        if (category == null) {
             throw new Exception("Category can't be null when generating an image name");
         }
         return StringUtil.concatJoined(
@@ -87,8 +82,7 @@ public class ImageUtil {
                 category.getName(),
                 "-",
                 String.valueOf(System.currentTimeMillis()),
-                ".webp"
-        );
+                ".webp");
     }
 
     public void saveImage(MultipartFile multipartFile, String savedImageName) throws IOException {
@@ -113,10 +107,10 @@ public class ImageUtil {
         }
     }
 
-    public void createWEBPImage(BufferedImage bufferedImageContent, File imageFile) throws IOException{
+    public void createWEBPImage(BufferedImage bufferedImageContent, File imageFile) throws IOException {
         boolean result = ImageIO.write(bufferedImageContent, "webp", imageFile);
-        if (!result){
-            throw new IOException("Could not save image with name \""+imageFile.getName()+"\"");
+        if (!result) {
+            throw new IOException("Could not save image with name \"" + imageFile.getName() + "\"");
         }
     }
 }

@@ -13,6 +13,7 @@ import com.example.finder.model.*;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
+import com.example.finder.repository.specification.DiscussionSpecifications;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.AnnounceError;
@@ -38,8 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,8 +73,7 @@ public class DiscussionService {
             ValidatorDiscussionMessage validatorDiscussionMessage,
             ValidatorImage validatorImage,
             ImageUtil imageUtil,
-            PaginationConfig paginationConfig
-    ) {
+            PaginationConfig paginationConfig) {
         this.discussionRepository = discussionRepository;
         this.announceRepository = announceRepository;
         this.messageRepository = messageRepository;
@@ -95,20 +93,18 @@ public class DiscussionService {
     @Transactional
     public ResponseEntity<?> createNewDiscussion(
             UUID uuid,
-            RequestDiscussion request
-    ) {
+            RequestDiscussion request) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
             Specification<Announce> spec = Specification.allOf(
                     AnnounceSpecifications.hasShownStatus(),
-                    AnnounceSpecifications.hasId(uuid)
-            );
+                    AnnounceSpecifications.hasId(uuid));
             Announce announce = announceRepository.findOne(spec).orElse(null);
             if (announce == null) {
                 return ApiResponseFactory.notFound("no such announce exists");
             }
             boolean isAnnounceAuthorAlsoRequester = requester.getId() == announce.getAuthor().getId();
-            if(isAnnounceAuthorAlsoRequester){
+            if (isAnnounceAuthorAlsoRequester) {
                 return ApiResponseFactory.badRequest(DiscussionError.AUTHOR_CANT_INITIATE_DISCUSSION.getErrorMessage());
             }
 
@@ -117,8 +113,7 @@ public class DiscussionService {
             if (!validationErrors.isEmpty()) {
                 return ApiResponseFactory.badRequest(
                         DiscussionError.INVALID_MESSAGE.getErrorMessage(),
-                        validationErrors
-                );
+                        validationErrors);
             }
             RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
             InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
@@ -143,8 +138,28 @@ public class DiscussionService {
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return  ApiResponseFactory.internalError();
+            return ApiResponseFactory.internalError();
         }
     }
+
+    public ResponseEntity<?> getDiscussion(UUID uuid) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            Specification<Discussion> spec = Specification.allOf(
+                    DiscussionSpecifications.hasId(uuid),
+                    DiscussionSpecifications.hasParticipant(requester.getId()));
+
+            Discussion discussion = discussionRepository.findOne(spec).orElse(null);
+            if (discussion == null) {
+                return ApiResponseFactory
+                        .notFound("Either there is no such discussion or you are not a participant in it");
+            }
+            return ApiResponseFactory.success(discussion.toDetailedDiscussionDTO());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
 
 }
