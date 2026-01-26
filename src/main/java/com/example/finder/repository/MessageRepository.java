@@ -10,8 +10,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface MessageRepository extends JpaRepository<Message, UUID>{
-    
+public interface MessageRepository extends JpaRepository<Message, UUID> {
+
     @Query("SELECT MAX(m.index) FROM Message m WHERE m.discussion.id = :discussionId")
     Optional<Integer> findMaxIndexByDiscussionId(@Param("discussionId") UUID discussionId);
 }
