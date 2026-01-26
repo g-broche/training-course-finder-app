@@ -1,15 +1,6 @@
 package com.example.finder.dto.output;
 
-import com.example.finder.model.AppUser;
-import com.example.finder.model.Discussion;
 import com.example.finder.model.Message;
-import com.example.finder.model.RecordStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
 import java.util.UUID;

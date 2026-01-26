@@ -1,6 +1,8 @@
 package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
+import com.example.finder.dto.input.RequestDiscussion;
+import com.example.finder.dto.input.RequestMessage;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
@@ -30,5 +32,13 @@ public class DiscussionController {
     public ResponseEntity<?> getDiscussion(@PathVariable UUID uuid) {
         boolean withHiddenAnnounce = false;
         return discussionService.getDiscussion(uuid, withHiddenAnnounce);
+    }
+
+    @PostMapping("/{uuid}/messages/new")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> addMessageToDiscussion(
+            @PathVariable UUID uuid,
+            @RequestBody RequestMessage request) {
+        return discussionService.addMessageToDiscussion(uuid, request);
     }
 }

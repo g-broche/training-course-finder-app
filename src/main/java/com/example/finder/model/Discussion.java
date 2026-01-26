@@ -1,6 +1,8 @@
 package com.example.finder.model;
 
 import com.example.finder.dto.output.DetailedDiscussionDTO;
+import com.example.finder.dto.output.DiscussionDTO;
+
 import jakarta.persistence.*;
 import jakarta.persistence.CascadeType;
 import org.hibernate.annotations.*;
@@ -113,7 +115,22 @@ public class Discussion {
         message.setDiscussion(null);
     }
 
-    public DetailedDiscussionDTO toDetailedDiscussionDTO (){
+    public DetailedDiscussionDTO toDetailedDiscussionDTO() {
         return new DetailedDiscussionDTO(this);
+    }
+
+    public DiscussionDTO toDiscussionDTO() {
+        return new DiscussionDTO(this);
+    }
+
+    public String getExcerpt() {
+        if (messages.isEmpty()) {
+            return "";
+        }
+        Message[] sortedMessages = this.getMessages().stream()
+                .sorted((m1, m2) -> Integer.compare(m1.getIndex(), m2.getIndex()))
+                .toArray(Message[]::new);
+        String excerpt = sortedMessages[0].getContent();
+        return excerpt;
     }
 }

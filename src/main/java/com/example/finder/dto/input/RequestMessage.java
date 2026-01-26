@@ -1,12 +1,12 @@
 package com.example.finder.dto.input;
 
-public class RequestDiscussion {
+public class RequestMessage {
     private String message;
 
-    public RequestDiscussion() {
+    public RequestMessage() {
     }
 
-    public RequestDiscussion(String message) {
+    public RequestMessage(String message) {
         this.message = message;
     }
 

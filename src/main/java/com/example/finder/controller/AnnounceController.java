@@ -112,11 +112,4 @@ public class AnnounceController {
         boolean withHiddenAnnounce = false;
         return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
     }
-
-    //
-    // @GetMapping("/{uuid}/discussions/private")
-    // public ResponseEntity<?> getDiscussionDetails(@PathVariable UUID uuid){
-    // boolean mustHiddenRecordBeDisplayed = false;
-    // return discussionService.getDiscussionDetails(uuid);
-    // }
 }

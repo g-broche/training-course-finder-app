@@ -1,6 +1,7 @@
 package com.example.finder.service;
 
 import com.example.finder.dto.input.RequestDiscussion;
+import com.example.finder.dto.input.RequestMessage;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.model.*;
 import com.example.finder.repository.*;
@@ -71,6 +72,13 @@ public class DiscussionService {
                 return ApiResponseFactory.badRequest(DiscussionError.AUTHOR_CANT_INITIATE_DISCUSSION.getErrorMessage());
             }
 
+            Specification<Announce> existingDiscussionSpec = AnnounceSpecifications.hasDiscussionWithInterlocutor(uuid,
+                    requester.getId());
+            boolean discussionExists = announceRepository.exists(existingDiscussionSpec);
+            if (discussionExists) {
+                return ApiResponseFactory.badRequest(DiscussionError.DISCUSSION_ALREADY_OPEN.getErrorMessage());
+            }
+
             RequestDiscussion sanitizedRequest = sanitizerUtil.sanitizeDiscussionInputs(request);
             List<ErrorDto> validationErrors = validatorDiscussionMessage.validateDiscussionMessage(sanitizedRequest);
             if (!validationErrors.isEmpty()) {
@@ -124,7 +132,7 @@ public class DiscussionService {
             return ApiResponseFactory.success(
                     discussions
                             .stream()
-                            .map(Discussion::toDetailedDiscussionDTO)
+                            .map(Discussion::toDiscussionDTO)
                             .toList());
         } catch (Exception e) {
             e.printStackTrace();
@@ -154,5 +162,49 @@ public class DiscussionService {
             return ApiResponseFactory.internalError();
         }
     };
+
+    @Transactional
+    public ResponseEntity<?> addMessageToDiscussion(
+            UUID uuidDiscussion,
+            RequestMessage request) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            Specification<Discussion> spec = Specification.allOf(
+                    DiscussionSpecifications.hasId(uuidDiscussion),
+                    DiscussionSpecifications.hasParticipant(requester.getId()),
+                    DiscussionSpecifications.mustHaveVisibleAnnounce(),
+                    DiscussionSpecifications.isOpen());
+            Discussion discussion = discussionRepository.findOne(spec).orElse(null);
+            if (discussion == null) {
+                return ApiResponseFactory.notFound("no such ongoing discussion exists");
+            }
+
+            RequestDiscussion sanitizedRequest = sanitizerUtil.sanitizeMessageInputs(request);
+            List<ErrorDto> validationErrors = validatorDiscussionMessage.validateDiscussionMessage(sanitizedRequest);
+            if (!validationErrors.isEmpty()) {
+                return ApiResponseFactory.badRequest(
+                        DiscussionError.INVALID_MESSAGE.getErrorMessage(),
+                        validationErrors);
+            }
+
+            RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+            int currentMaxIndex = messageRepository.findMaxIndexByDiscussionId(discussion.getId()).orElse(0);
+
+            Message newMessage = new Message();
+            newMessage.setAuthor(requester);
+            newMessage.setDiscussion(discussion);
+            newMessage.setContent(sanitizedRequest.getMessage());
+            newMessage.setIndex(currentMaxIndex + 1);
+            newMessage.setRecordStatus(shownStatus);
+            newMessage.setReported(false);
+            messageRepository.save(newMessage);
+
+            return ApiResponseFactory.success("Message added successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ApiResponseFactory.internalError();
+        }
+    }
 
 }

@@ -3,6 +3,7 @@ package com.example.finder.repository.specification;
 import com.example.finder.model.Announce;
 import com.example.finder.model.AnnounceType;
 import com.example.finder.model.Discussion;
+import com.example.finder.model.enums.AvailableInteractivityState;
 import com.example.finder.model.enums.AvailableRecordStatus;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -44,5 +45,11 @@ public class DiscussionSpecifications {
                 return (root, query, cb) -> cb.equal(
                                 root.get("announce").get("recordStatus").get("name"),
                                 AvailableRecordStatus.SHOWN.toString());
+        }
+
+        public static Specification<Discussion> isOpen() {
+                return (root, query, cb) -> cb.equal(
+                                root.get("interactivityState").get("name"),
+                                AvailableInteractivityState.OPEN.toString());
         }
 }
