@@ -2,6 +2,7 @@ package com.example.finder.config;
 
 import com.example.finder.service.CustomUserDetailsService;
 import com.example.finder.utils.jwt.JwtFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,15 +26,19 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    private final String allowedOrigin = "*";
+    private final String allowedOrigin;
     private final List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE");
     private final List<String> allowedHeaders = List.of("*");
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtFilter jwtFilter, CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(
+            JwtFilter jwtFilter,
+            CustomUserDetailsService userDetailsService,
+            @Value("${cors.allowed-origin}") String allowedOrigin) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
+        this.allowedOrigin = allowedOrigin;
     }
 
     /**
@@ -65,19 +70,17 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/auth/**").permitAll()
                         .requestMatchers("/api/categories").permitAll()
                         .requestMatchers("/api/announces/found/paginated").permitAll()
                         .requestMatchers("/api/announces/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .sessionManagement(
-                        session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-
 
     /**
      *

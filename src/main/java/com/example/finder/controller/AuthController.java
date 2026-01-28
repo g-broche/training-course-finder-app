@@ -13,8 +13,7 @@ public class AuthController {
     private final AuthService authService;
 
     public AuthController(
-            AuthService authService
-            ) {
+            AuthService authService) {
         this.authService = authService;
     }
 
@@ -27,7 +26,6 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody RequestLogin request) {
         return authService.logUser(request);
     }
-
 
     @GetMapping("/verify/{token}")
     public ResponseEntity<?> verifyEmail(@PathVariable String token) {

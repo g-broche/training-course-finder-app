@@ -1,15 +1,12 @@
 package com.example.finder.config;
 
-import com.example.finder.model.*;
-import com.example.finder.model.enums.*;
-import com.example.finder.repository.*;
 import com.example.finder.seeders.*;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DatabaseSeeder implements ApplicationRunner{
+public class DatabaseSeeder implements ApplicationRunner {
 
     private final RoleSeeder roleSeeder;
     private final UserStatusSeeder userStatusSeeder;
@@ -26,8 +23,7 @@ public class DatabaseSeeder implements ApplicationRunner{
             InteractivityStateSeeder interactivityStateSeeder,
             AnnounceTypeSeeder announceTypeSeeder,
             AnnounceStatusSeeder announceStatusSeeder,
-            CategorySeeder categorySeeder
-    ) {
+            CategorySeeder categorySeeder) {
         this.roleSeeder = roleSeeder;
         this.userStatusSeeder = userStatusSeeder;
         this.recordStatusSeeder = recordStatusSeeder;

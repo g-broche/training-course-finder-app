@@ -2,6 +2,8 @@ package com.example.finder.model;
 
 import com.example.finder.dto.output.DetailedUserDto;
 import com.example.finder.dto.output.OtherUserDto;
+import com.example.finder.model.enums.AvailableRoles;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -68,8 +70,7 @@ public class AppUser {
             String lastName,
             String displayName,
             String email,
-            String password
-    ) {
+            String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.displayName = displayName;
@@ -189,11 +190,17 @@ public class AppUser {
         this.recordStatus = recordStatus;
     }
 
-    public DetailedUserDto toDetailedUserDto(){
+    public DetailedUserDto toDetailedUserDto() {
         return new DetailedUserDto(this);
     }
 
-    public OtherUserDto toOtherUserDto(){
+    public OtherUserDto toOtherUserDto() {
         return new OtherUserDto(this);
+    }
+
+    public boolean isAdmin() {
+        return roles.stream()
+                .anyMatch(role -> AvailableRoles.ADMIN.getDisplayName()
+                        .equalsIgnoreCase(role.getName()));
     }
 }

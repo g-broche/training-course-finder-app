@@ -2,6 +2,7 @@ package com.example.finder.response;
 
 import com.example.finder.response.enums.GenericError;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 
 public class ApiResponseFactory {
@@ -24,6 +25,33 @@ public class ApiResponseFactory {
 
     public static <T> ResponseEntity<ApiResponse<T>> success(String message, T data, HttpStatus status) {
         return ResponseEntity.status(status).body(new ApiResponse<>(true, message, data));
+    }
+
+    /**
+     * Success response with cookie header
+     * 
+     * @param message Response message
+     * @param cookie  ResponseCookie to include in Set-Cookie header
+     * @return ResponseEntity with cookie header
+     */
+    public static ResponseEntity<ApiResponse<Void>> success(String message, ResponseCookie cookie) {
+        return ResponseEntity.ok()
+                .header("Set-Cookie", cookie.toString())
+                .body(new ApiResponse<>(true, message, null));
+    }
+
+    /**
+     * Success response with data and cookie header
+     * 
+     * @param message Response message
+     * @param data    Response data
+     * @param cookie  ResponseCookie to include in Set-Cookie header
+     * @return ResponseEntity with cookie header
+     */
+    public static <T> ResponseEntity<ApiResponse<T>> success(String message, T data, ResponseCookie cookie) {
+        return ResponseEntity.ok()
+                .header("Set-Cookie", cookie.toString())
+                .body(new ApiResponse<>(true, message, data));
     }
 
     public static <T> ResponseEntity<ApiResponse<T>> error(String message, T data, HttpStatus status) {
