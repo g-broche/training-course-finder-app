@@ -32,6 +32,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -66,8 +67,7 @@ public class AnnounceService {
             ValidatorAnnounce validatorAnnounce,
             ValidatorImage validatorImage,
             ImageUtil imageUtil,
-            PaginationConfig paginationConfig
-    ) {
+            PaginationConfig paginationConfig) {
         this.announceRepository = announceRepository;
         this.announceTypeRepository = announceTypeRepository;
         this.announceStatusRepository = announceStatusRepository;
@@ -84,27 +84,28 @@ public class AnnounceService {
 
     /**
      * Get data related to a specific announce and creates an api response from it
-     * @param uuid id of announce
-     * @param mustShowHidden if false only gets an announce with a record status of shown,
+     * 
+     * @param uuid           id of announce
+     * @param mustShowHidden if false only gets an announce with a record status of
+     *                       shown,
      *                       if true return an announce as long as it exists (admin)
      * @return api response with the relevant data
      */
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getAnnounceDetail(UUID uuid, Boolean mustShowHidden){
+    public ResponseEntity<?> getAnnounceDetail(UUID uuid, Boolean mustShowHidden) {
         try {
             List<Specification<Announce>> specList = new ArrayList<>();
-            if(!mustShowHidden){
+            if (!mustShowHidden) {
                 specList.add(AnnounceSpecifications.hasShownStatus());
             }
             Specification<Announce> spec = Specification.allOf(specList);
             Announce foundAnnounce = announceRepository.findById(uuid).orElse(null);
-            if(foundAnnounce == null){
+            if (foundAnnounce == null) {
                 return ApiResponseFactory.notFound("No corresponding announce was found");
             }
             AnnounceDto announceDto = new AnnounceDto(
                     foundAnnounce,
-                    imageUtil.getBaseWebPathForPhotos()
-            );
+                    imageUtil.getBaseWebPathForPhotos());
             return ApiResponseFactory.success(announceDto);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -112,13 +113,18 @@ public class AnnounceService {
     }
 
     /**
-     * get page of announces depending on given arguments and returns the data in a ApiResponse
-     * @param page page to get
-     * @param size amount of announces per page
-     * @param type AvailableAnnounceType value for filter between Found, Lost or pass null for both
-     * @param searchQuery filter announces to match the search query if it exists
-     * @param categoryId filter announces by a category if categoryId is not null
-     * @param mustShowHidden false only get announces with a record status of Shown, true doesn't
+     * get page of announces depending on given arguments and returns the data in a
+     * ApiResponse
+     * 
+     * @param page           page to get
+     * @param size           amount of announces per page
+     * @param type           AvailableAnnounceType value for filter between Found,
+     *                       Lost or pass null for both
+     * @param searchQuery    filter announces to match the search query if it exists
+     * @param categoryId     filter announces by a category if categoryId is not
+     *                       null
+     * @param mustShowHidden false only get announces with a record status of Shown,
+     *                       true doesn't
      *                       filter based on such status (intended for admin board)
      * @return api response with data according the the given parameters
      */
@@ -129,86 +135,88 @@ public class AnnounceService {
             AvailableAnnounceTypes type,
             String searchQuery,
             Long categoryId,
-            Boolean mustShowHidden
-    ) {
+            Boolean mustShowHidden) {
         try {
             AnnounceType announceTypeRequired = type != null
-                ? announceTypeRepository.findByName(type.getDisplayName()).orElse(null)
-                : null;
+                    ? announceTypeRepository.findByName(type.getDisplayName()).orElse(null)
+                    : null;
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             List<Specification<Announce>> specList = new ArrayList<>(
                     Arrays.asList(
                             AnnounceSpecifications.hasCategory(categoryId),
-                            AnnounceSpecifications.hasSearch(searchQuery)
-                    )
-            );
-            if(announceTypeRequired != null){
+                            AnnounceSpecifications.hasSearch(searchQuery)));
+            if (announceTypeRequired != null) {
                 specList.add(AnnounceSpecifications.hasType(announceTypeRequired));
             }
-            if(!mustShowHidden){
+            if (!mustShowHidden) {
                 specList.add(AnnounceSpecifications.hasShownStatus());
             }
             Specification<Announce> spec = Specification.allOf(specList);
 
             Page<Announce> announcePage = announceRepository.findAll(spec, pageable);
-            Page<AnnounceDto> announceDtoPage = announcePage.map( (it) -> {
+            Page<AnnounceDto> announceDtoPage = announcePage.map((it) -> {
                 return new AnnounceDto(
                         it,
-                        imageUtil.getBaseWebPathForPhotos()
-                );
+                        imageUtil.getBaseWebPathForPhotos());
             });
             var paginatedResult = PaginatedResponse.from(announceDtoPage);
             return ApiResponseFactory.success(paginatedResult);
         } catch (Exception e) {
             e.printStackTrace();
-            return  ApiResponseFactory.internalError();
+            return ApiResponseFactory.internalError();
         }
     }
 
     /**
      * Create a new found object announce
-     * @param request data related to the announce
+     * 
+     * @param request       data related to the announce
      * @param receivedImage image provided for the item
      * @return api response with DTO representation of the created announce
      */
+    @Transactional
     public ResponseEntity<?> createNewFoundAnnounce(
             RequestAnnounce request,
-            MultipartFile receivedImage
-    ) {
+            MultipartFile receivedImage) {
+        // validate received image
         try {
             validatorImage.validateImage(receivedImage);
         } catch (FileException e) {
             return ApiResponseFactory.badRequest(e.getMessage());
         }
-
+        // creates variable out of try scope for use during catch
         String savedImageName = null;
         boolean isSuccess = false;
 
         try {
+            // get requester data using the token provided with the request
             AppUser requester = validatorAuth.getUserFromSecurityContext();
 
+            // sanitize and validate request data
             RequestAnnounce sanitizedRequest = sanitizerUtil.sanitizeAnnounceInputs(request);
             List<ErrorDto> validationErrors = validatorAnnounce.validateAnnounceInputs(sanitizedRequest);
             if (!validationErrors.isEmpty()) {
                 return ApiResponseFactory.badRequest(
                         AnnounceError.INVALID_CREATION_DATA.getErrorMessage(),
-                        validationErrors
-                );
+                        validationErrors);
             }
 
+            // get default announce relations
             AnnounceType foundType = announceTypeRepository.getFoundAnnounceTypeOrThrow();
             AnnounceStatus unsolvedStatus = announceStatusRepository.getUnsolvedAnnounceStatusOrThrow();
             RecordStatus showStatus = recordStatusRepository.getShownRecordStatusOrThrow();
             InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
 
+            // get category based on request category id
             Category itemCategory = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(CategoryNotFoundException::new);
 
+            // create a unique image name for storage and save image
             savedImageName = ImageUtil.createImageName(foundType, itemCategory);
-
             imageUtil.saveImage(receivedImage, savedImageName);
 
+            // instanciate new announce and set all its properties
             Announce newAnnounce = new Announce(
                     request.getTitle(),
                     request.getDescription(),
@@ -216,8 +224,7 @@ public class AnnounceService {
                     request.getCity(),
                     request.getCountry(),
                     request.getLatitude(),
-                    request.getLongitude()
-            );
+                    request.getLongitude());
             newAnnounce.setPhoto(savedImageName);
             newAnnounce.setAuthor(requester);
             newAnnounce.setCategory(itemCategory);
@@ -226,16 +233,17 @@ public class AnnounceService {
             newAnnounce.setRecordStatus(showStatus);
             newAnnounce.setInteractivityState(openState);
 
+            // save announce through ORM
             announceRepository.save(newAnnounce);
 
+            // construct path to image and logs it for reference
             String webPathToImage = imageUtil.getWebPathToPhoto(newAnnounce.getPhoto());
-            Printer.printLog(StringUtil.concat(
-                    "New announce:",
-                    newAnnounce.getTitle(),
-                    " -> web path to image:",
-                    webPathToImage
-                    ));
+            Printer.printLog("New announce: " + newAnnounce.getTitle() + " ; image -> " + webPathToImage);
+            // create DTO object based on the new announce to return the data in the
+            // response
             AnnounceDto announceDto = new AnnounceDto(newAnnounce, webPathToImage);
+
+            // if this point is reached set isSuccess to true and return the response
             isSuccess = true;
             return ApiResponseFactory.success(announceDto);
         } catch (UserNotFoundException e) {
@@ -245,11 +253,14 @@ public class AnnounceService {
         } catch (InvalidRequestException e) {
             return ApiResponseFactory.badRequest("Invalid request sent to create a new item found announce");
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
             return ApiResponseFactory.internalError();
         } finally {
-            if (!isSuccess){
-                try{
+            // if an error occured during the process, delete the image if the error
+            // occurred after it was stored
+            if (!isSuccess) {
+                try {
                     Files.deleteIfExists(imageUtil.getLocalImagePath(savedImageName));
                     Printer.printLog("deleted file after failure");
                 } catch (Exception e) {
@@ -259,5 +270,4 @@ public class AnnounceService {
             }
         }
     }
-
 }

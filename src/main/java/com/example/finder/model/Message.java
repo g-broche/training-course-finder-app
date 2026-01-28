@@ -1,5 +1,7 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.CategoryDto;
+import com.example.finder.dto.output.MessageDTO;
 import jakarta.persistence.*;
 import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
@@ -122,5 +124,9 @@ public class Message {
 
     public void setEditedAt(Timestamp editedAt) {
         this.editedAt = editedAt;
+    }
+
+    public MessageDTO toDto(){
+        return new MessageDTO(this);
     }
 }

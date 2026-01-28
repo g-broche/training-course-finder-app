@@ -7,6 +7,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -59,6 +61,9 @@ public class Announce {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @OneToMany(mappedBy = "announce", fetch = FetchType.LAZY)
+    private List<Discussion> discussions = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Timestamp createdAt;
@@ -70,6 +75,7 @@ public class Announce {
     public Announce() {
 
     }
+
     public Announce(
             String title,
             String description,
@@ -77,8 +83,7 @@ public class Announce {
             String city,
             String country,
             String latitude,
-            String longitude
-    ) {
+            String longitude) {
         this.title = title;
         this.description = description;
         this.relevantDate = relevantDate;
@@ -120,9 +125,13 @@ public class Announce {
         this.photo = photo;
     }
 
-    public String getCountry() { return country; }
+    public String getCountry() {
+        return country;
+    }
 
-    public void setCountry(String country) { this.country = country; }
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
     public String getCity() {
         return city;
@@ -156,10 +165,13 @@ public class Announce {
         this.relevantDate = relevantDate;
     }
 
+    public AnnounceStatus getStatus() {
+        return status;
+    }
 
-    public AnnounceStatus getStatus() { return status; }
-
-    public void setStatus(AnnounceStatus status) { this.status = status; }
+    public void setStatus(AnnounceStatus status) {
+        this.status = status;
+    }
 
     public AnnounceType getType() {
         return type;
@@ -215,5 +227,13 @@ public class Announce {
 
     public void setEditedAt(Timestamp editedAt) {
         this.editedAt = editedAt;
+    }
+
+    public List<Discussion> getDiscussions() {
+        return discussions;
+    }
+
+    public void setDiscussions(List<Discussion> discussions) {
+        this.discussions = discussions;
     }
 }

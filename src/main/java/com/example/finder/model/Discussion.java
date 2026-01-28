@@ -1,10 +1,16 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.DetailedDiscussionDTO;
+import com.example.finder.dto.output.DiscussionDTO;
+
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
 import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,6 +33,9 @@ public class Discussion {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "interactivity_state_id", nullable = false)
     private InteractivityState interactivityState;
+
+    @OneToMany(mappedBy = "discussion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Message> messages = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -90,5 +99,38 @@ public class Discussion {
 
     public void setEditedAt(Timestamp editedAt) {
         this.editedAt = editedAt;
+    }
+
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void addMessage(Message message) {
+        messages.add(message);
+        message.setDiscussion(this);
+    }
+
+    public void removeMessage(Message message) {
+        messages.remove(message);
+        message.setDiscussion(null);
+    }
+
+    public DetailedDiscussionDTO toDetailedDiscussionDTO() {
+        return new DetailedDiscussionDTO(this);
+    }
+
+    public DiscussionDTO toDiscussionDTO() {
+        return new DiscussionDTO(this);
+    }
+
+    public String getExcerpt() {
+        if (messages.isEmpty()) {
+            return "";
+        }
+        Message[] sortedMessages = this.getMessages().stream()
+                .sorted((m1, m2) -> Integer.compare(m1.getIndex(), m2.getIndex()))
+                .toArray(Message[]::new);
+        String excerpt = sortedMessages[0].getContent();
+        return excerpt;
     }
 }

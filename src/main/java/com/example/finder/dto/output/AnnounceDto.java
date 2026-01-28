@@ -21,12 +21,13 @@ public class AnnounceDto {
     private String type;
     private OtherUserDto author;
     private String interactivityState;
+    private String recordStatus;
     private String status;
     private String category;
     private Timestamp createdAt;
     private Timestamp editedAt;
 
-    public AnnounceDto(Announce announce, String basePhotoPath){
+    public AnnounceDto(Announce announce, String basePhotoPath) {
         this.id = announce.getId().toString();
         this.title = announce.getTitle();
         this.description = announce.getDescription();
@@ -39,15 +40,16 @@ public class AnnounceDto {
         this.type = announce.getType().getName();
         this.author = announce.getAuthor().toOtherUserDto();
         this.interactivityState = announce.getInteractivityState().getName();
+        this.recordStatus = announce.getRecordStatus().getName();
         this.status = announce.getStatus().getName();
         this.category = announce.getCategory().getName();
         this.createdAt = announce.getCreatedAt();
         this.editedAt = announce.getEditedAt();
     }
 
-    private String getPhotoPathIfExists(Announce announce, String basePhotoPath){
+    private String getPhotoPathIfExists(Announce announce, String basePhotoPath) {
         return announce.getPhoto() != null && !announce.getPhoto().isEmpty()
-                ? basePhotoPath+announce.getPhoto()
+                ? basePhotoPath + announce.getPhoto()
                 : null;
     }
 
@@ -145,6 +147,14 @@ public class AnnounceDto {
 
     public void setInteractivityState(String interactivityState) {
         this.interactivityState = interactivityState;
+    }
+
+    public String getRecordStatus() {
+        return recordStatus;
+    }
+
+    public void setRecordStatus(String recordStatus) {
+        this.recordStatus = recordStatus;
     }
 
     public String getStatus() {
