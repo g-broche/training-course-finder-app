@@ -206,5 +206,4 @@ public class DiscussionService {
             return ApiResponseFactory.internalError();
         }
     }
-
 }

@@ -250,4 +250,201 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 .andExpect(jsonPath("$.data.messages[2].content")
                                                 .value("At the coffee shop on Main Street."));
         }
+
+        @Test
+        void reportDiscussionMessage_AsAnnounceAuthor_Success() throws Exception {
+                // Create a new discussion with a message to report
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(discussionInitiator);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("This is a message that will be reported");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(false);
+                messageToReport = messageRepository.save(messageToReport);
+
+                mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
+                                + "/messages/" + messageToReport.getId() + "/report")
+                                .header("Authorization", "Bearer " + authorToken))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.message").value("message reported successfully"));
+
+                // Verify the message is actually marked as reported
+                Message updatedMessage = messageRepository.findById(messageToReport.getId()).orElse(null);
+                assertNotNull(updatedMessage);
+                assertTrue(updatedMessage.isReported());
+        }
+
+        @Test
+        void reportDiscussionMessage_AsDiscussionInitiator_Success() throws Exception {
+                // Create a new discussion with a message from announce author to report
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(announceAuthor);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("This is a message from author that will be reported");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(false);
+                messageToReport = messageRepository.save(messageToReport);
+
+                mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
+                                + "/messages/" + messageToReport.getId() + "/report")
+                                .header("Authorization", "Bearer " + initiatorToken))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.message").value("message reported successfully"));
+
+                // Verify the message is actually marked as reported
+                Message updatedMessage = messageRepository.findById(messageToReport.getId()).orElse(null);
+                assertNotNull(updatedMessage);
+                assertTrue(updatedMessage.isReported());
+        }
+
+        @Test
+        void reportDiscussionMessage_AsNonParticipant_Unauthorized() throws Exception {
+                // Create a new discussion with a message
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(discussionInitiator);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("This message cannot be reported by non-participant");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(false);
+                messageToReport = messageRepository.save(messageToReport);
+
+                mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
+                                + "/messages/" + messageToReport.getId() + "/report")
+                                .header("Authorization", "Bearer " + otherUserToken))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(jsonPath("$.message").value("you are not a participant of this discussion"));
+
+                // Verify the message was NOT marked as reported
+                Message updatedMessage = messageRepository.findById(messageToReport.getId()).orElse(null);
+                assertNotNull(updatedMessage);
+                assertFalse(updatedMessage.isReported());
+        }
+
+        @Test
+        void reportDiscussionMessage_WithoutAuth_Forbidden() throws Exception {
+                // Create a new discussion with a message
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(discussionInitiator);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("This message requires authentication to report");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(false);
+                messageToReport = messageRepository.save(messageToReport);
+
+                mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
+                                + "/messages/" + messageToReport.getId() + "/report"))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void reportDiscussionMessage_NonExistentMessage_NotFound() throws Exception {
+                mockMvc.perform(post("/api/discussions/" + testDiscussion.getId()
+                                + "/messages/00000000-0000-0000-0000-000000000000/report")
+                                .header("Authorization", "Bearer " + authorToken))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.message").value("no such message exists"));
+        }
+
+        @Test
+        void reportDiscussionMessage_NonExistentDiscussion_NotFound() throws Exception {
+                // Create a message in a valid discussion
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(discussionInitiator);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("Message in valid discussion");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(false);
+                messageToReport = messageRepository.save(messageToReport);
+
+                // Try to report with a non-existent discussion ID
+                mockMvc.perform(post("/api/discussions/00000000-0000-0000-0000-000000000000"
+                                + "/messages/" + messageToReport.getId() + "/report")
+                                .header("Authorization", "Bearer " + authorToken))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.message").value("no such message exists"));
+        }
+
+        @Test
+        void reportDiscussionMessage_AlreadyReported_Success() throws Exception {
+                // Create a message that is already reported
+                InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+                RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+
+                Discussion reportTestDiscussion = new Discussion();
+                reportTestDiscussion.setAnnounce(testAnnounce);
+                reportTestDiscussion.setInterlocutor(discussionInitiator);
+                reportTestDiscussion.setInteractivityState(openState);
+                reportTestDiscussion = discussionRepository.save(reportTestDiscussion);
+
+                Message messageToReport = new Message();
+                messageToReport.setAuthor(discussionInitiator);
+                messageToReport.setDiscussion(reportTestDiscussion);
+                messageToReport.setContent("This message is already reported");
+                messageToReport.setIndex(1);
+                messageToReport.setRecordStatus(shownStatus);
+                messageToReport.setReported(true); // Already reported
+                messageToReport = messageRepository.save(messageToReport);
+
+                // Reporting again should still succeed
+                mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
+                                + "/messages/" + messageToReport.getId() + "/report")
+                                .header("Authorization", "Bearer " + authorToken))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.message").value("message reported successfully"));
+
+                // Verify the message is still reported
+                Message updatedMessage = messageRepository.findById(messageToReport.getId()).orElse(null);
+                assertNotNull(updatedMessage);
+                assertTrue(updatedMessage.isReported());
+        }
 }

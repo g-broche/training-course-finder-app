@@ -2,9 +2,11 @@ package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestDiscussion;
+import com.example.finder.model.AnnounceType;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
+import com.example.finder.utils.EnumUtil;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,12 +23,15 @@ public class AnnounceController {
 
     private final AnnounceService announceService;
     private final DiscussionService discussionService;
+    private final EnumUtil enumUtil;
 
     public AnnounceController(
             AnnounceService announceService,
-            DiscussionService discussionService) {
+            DiscussionService discussionService,
+            EnumUtil enumUtil) {
         this.announceService = announceService;
         this.discussionService = discussionService;
+        this.enumUtil = enumUtil;
     }
 
     @GetMapping("/{uuid}")
@@ -37,32 +42,17 @@ public class AnnounceController {
 
     @GetMapping("/paginated")
     public ResponseEntity<?> getPaginatedAnnounces(
+            @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId) {
-        AvailableAnnounceTypes typeFilter = null;
         boolean mustHiddenRecordBeDisplayed = false;
+        AvailableAnnounceTypes typeFilter = enumUtil.announceTypeMatcher(type);
         return announceService.getPaginatedAnnounces(
                 page,
                 size,
                 typeFilter,
-                search,
-                categoryId,
-                mustHiddenRecordBeDisplayed);
-    }
-
-    @GetMapping("/found/paginated")
-    public ResponseEntity<?> getPaginatedFoundAnnounces(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId) {
-        boolean mustHiddenRecordBeDisplayed = false;
-        return announceService.getPaginatedAnnounces(
-                page,
-                size,
-                AvailableAnnounceTypes.FOUND,
                 search,
                 categoryId,
                 mustHiddenRecordBeDisplayed);

@@ -227,7 +227,7 @@ class AnnounceControllerTest extends UserRelatedTest {
 
         @Test
         void getPaginatedFoundAnnounces() throws Exception {
-                mockMvc.perform(get("/api/announces/found/paginated")
+                mockMvc.perform(get("/api/announces/paginated?type=found")
                                 .param("page", "0")
                                 .param("size", "10"))
                                 .andExpect(status().isOk())

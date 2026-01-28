@@ -6,15 +6,18 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 public class MessageDTO {
+    private UUID messageId;
     private UUID discussionId;
     private UUID announceId;
     private int index;
     private OtherUserDto author;
     private String content;
+    private boolean isReported;
     private Timestamp createdAt;
     private Timestamp editedAt;
 
     public MessageDTO(Message message) {
+        this.messageId = message.getId();
         this.discussionId = message.getDiscussion().getId();
         this.announceId = message.getDiscussion().getAnnounce().getId();
         this.index = message.getIndex();
@@ -22,6 +25,11 @@ public class MessageDTO {
         this.content = message.getContent();
         this.createdAt = message.getCreatedAt();
         this.editedAt = message.getEditedAt();
+        this.isReported = message.isReported();
+    }
+
+    public UUID getMessageId() {
+        return messageId;
     }
 
     public UUID getDiscussionId() {
@@ -78,5 +86,13 @@ public class MessageDTO {
 
     public void setEditedAt(Timestamp editedAt) {
         this.editedAt = editedAt;
+    }
+
+    public boolean getIsReported() {
+        return isReported;
+    }
+
+    public void setIsReported(boolean isReported) {
+        this.isReported = isReported;
     }
 }

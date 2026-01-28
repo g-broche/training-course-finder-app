@@ -15,6 +15,7 @@ import java.util.UUID;
 public class DetailedDiscussionDTO {
     private UUID discussionId;
     private UUID announceId;
+    private String announceTitle;
     private OtherUserDto announceAuthor;
     private OtherUserDto announceResponder;
     private String interactivityStateName;
@@ -34,6 +35,7 @@ public class DetailedDiscussionDTO {
                 .toList();
         this.createdAt = discussion.getCreatedAt();
         this.editedAt = discussion.getEditedAt();
+        this.announceTitle = discussion.getAnnounce().getTitle();
     }
 
     public UUID getDiscussionId() {
@@ -66,5 +68,13 @@ public class DetailedDiscussionDTO {
 
     public Timestamp getEditedAt() {
         return editedAt;
+    }
+
+    public String getAnnounceTitle() {
+        return announceTitle;
+    }
+
+    public void setAnnounceTitle(String announceTitle) {
+        this.announceTitle = announceTitle;
     }
 }
