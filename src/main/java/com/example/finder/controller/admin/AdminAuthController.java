@@ -22,7 +22,7 @@ public class AdminAuthController {
         return authService.logAdmin(request);
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> adminLogout() {
         return authService.logout();
     }

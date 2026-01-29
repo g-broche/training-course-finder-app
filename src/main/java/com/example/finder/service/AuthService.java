@@ -20,6 +20,7 @@ import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.utils.ActivationTokenUtil;
 import com.example.finder.utils.CookieUtil;
 import com.example.finder.utils.SanitizerUtil;
+import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorUser;
 import com.example.finder.utils.jwt.JwtUtil;
 import com.example.finder.utils.logger.Printer;
@@ -45,6 +46,7 @@ public class AuthService {
     private Environment environment;
     private final SanitizerUtil sanitizerUtil;
     private final ValidatorUser validatorUser;
+    private final ValidatorAuth validatorAuth;
     private final AppUserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserStatusRepository userStatusRepository;
@@ -64,7 +66,8 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             AuthenticationManager authManager,
             JwtUtil jwtUtil,
-            CookieUtil cookieUtil) {
+            CookieUtil cookieUtil,
+            ValidatorAuth validatorAuth) {
         this.sanitizerUtil = sanitizerUtil;
         this.validatorUser = validatorUser;
         this.userRepository = userRepository;
@@ -75,6 +78,7 @@ public class AuthService {
         this.authManager = authManager;
         this.jwtUtil = jwtUtil;
         this.cookieUtil = cookieUtil;
+        this.validatorAuth = validatorAuth;
     }
 
     /**
@@ -267,6 +271,27 @@ public class AuthService {
         return ApiResponseFactory.success(
                 "Logged out successfully",
                 cookieUtil.generateExpiredCookie());
+    }
+
+    /**
+     * Return information on currently logged user
+     * 
+     * @return Response entity with DetailedUserDTO
+     */
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            // get requester data using the token provided with the request
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+
+            if (requester == null) {
+                return ApiResponseFactory.unauthorized(
+                        AuthError.GUEST_FORBIDDEN.getErrorMessage());
+            }
+            return ApiResponseFactory.success(requester.toDetailedUserDto());
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.internalError();
+        }
     }
 
 }

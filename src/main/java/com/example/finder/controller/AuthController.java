@@ -4,6 +4,7 @@ import com.example.finder.dto.input.RequestLogin;
 import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.service.AuthService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,5 +31,11 @@ public class AuthController {
     @GetMapping("/verify/{token}")
     public ResponseEntity<?> verifyEmail(@PathVariable String token) {
         return authService.validateRegistrationToken(token);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getCurrentUser() {
+        return authService.getCurrentUser();
     }
 }

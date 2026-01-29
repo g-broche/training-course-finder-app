@@ -98,7 +98,7 @@ public class AnnounceController {
 
     @GetMapping("/{uuid}/discussions")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getDiscussions(@PathVariable UUID uuid) {
+    public ResponseEntity<?> getAnnounceDiscussions(@PathVariable UUID uuid) {
         boolean withHiddenAnnounce = false;
         return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
     }
