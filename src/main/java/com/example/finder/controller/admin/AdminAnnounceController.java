@@ -1,9 +1,13 @@
 package com.example.finder.controller.admin;
 
+import com.example.finder.dto.input.RequestRecordStatus;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.EnumUtil;
+
+import org.apache.catalina.connector.Request;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,14 +32,14 @@ public class AdminAnnounceController {
     }
 
     @GetMapping("/{uuid}")
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAnnounceDetail(@PathVariable UUID uuid) {
         boolean mustHiddenRecordBeDisplayed = false;
         return announceService.getAnnounceDetail(uuid, mustHiddenRecordBeDisplayed);
     }
 
     @GetMapping("/paginated")
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getPaginatedAnnounces(
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
@@ -54,9 +58,18 @@ public class AdminAnnounceController {
     }
 
     @GetMapping("/{uuid}/discussions")
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAnnounceDiscussions(@PathVariable UUID uuid) {
         boolean withHiddenAnnounce = true;
         return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
+    }
+
+    @PutMapping("/{uuid}/recordstatus")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateVisibility(
+            @PathVariable UUID uuid,
+            @RequestBody RequestRecordStatus request) {
+        AvailableRecordStatus recordStatus = enumUtil.recordStatusMatcher(request.getRecordStatus());
+        return announceService.forceChangeRecordStatus(uuid, recordStatus);
     }
 }

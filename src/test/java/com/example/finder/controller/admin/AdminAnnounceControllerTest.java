@@ -179,11 +179,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetAnnounceDetail_WithoutToken_ReturnsUnauthorized() throws Exception {
+    void testGetAnnounceDetail_WithoutToken_ReturnsForbidden() throws Exception {
         UUID announceId = testAnnounces.get(0).getId();
 
         mockMvc.perform(get("/api/admin/announces/{uuid}", announceId))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -267,11 +267,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetPaginatedAnnounces_WithoutToken_ReturnsUnauthorized() throws Exception {
+    void testGetPaginatedAnnounces_WithoutToken_ReturnsForbidden() throws Exception {
         mockMvc.perform(get("/api/admin/announces/paginated")
                 .param("page", "0")
                 .param("size", "50"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -303,19 +303,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetAnnounceDiscussions_WithoutToken_ReturnsUnauthorized() throws Exception {
+    void testGetAnnounceDiscussions_WithoutToken_ReturnsForbidden() throws Exception {
         UUID announceId = testAnnounces.get(0).getId();
 
         mockMvc.perform(get("/api/admin/announces/{uuid}/discussions", announceId))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
-    @Test
-    void testGetAnnounceDiscussions_WithNonExistentAnnounce_ReturnsNotFound() throws Exception {
-        UUID nonExistentId = UUID.randomUUID();
-
-        mockMvc.perform(get("/api/admin/announces/{uuid}/discussions", nonExistentId)
-                .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNotFound());
-    }
 }

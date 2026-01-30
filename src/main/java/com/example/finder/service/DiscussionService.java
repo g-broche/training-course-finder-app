@@ -4,6 +4,7 @@ import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestMessage;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.model.*;
+import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
 import com.example.finder.repository.specification.DiscussionSpecifications;

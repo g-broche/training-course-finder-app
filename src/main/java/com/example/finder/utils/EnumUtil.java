@@ -1,6 +1,8 @@
 package com.example.finder.utils;
 
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableRecordStatus;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,15 +14,28 @@ public class EnumUtil {
     }
 
     public AvailableAnnounceTypes announceTypeMatcher(String type) {
-        AvailableAnnounceTypes typeFilter = null;
+        AvailableAnnounceTypes result = null;
         if (type != null) {
             try {
-                typeFilter = AvailableAnnounceTypes.valueOf(type.toUpperCase());
+                result = AvailableAnnounceTypes.valueOf(type.toUpperCase());
             } catch (IllegalArgumentException e) {
                 System.out.println("Invalid announce type filter: " + type + "; defaulting to null.");
-                return typeFilter;
+                return result;
             }
         }
-        return typeFilter;
+        return result;
+    }
+
+    public AvailableRecordStatus recordStatusMatcher(String recordStatus) {
+        AvailableRecordStatus result = null;
+        if (recordStatus != null) {
+            try {
+                result = AvailableRecordStatus.valueOf(recordStatus.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid announce type filter: " + recordStatus + "; defaulting to null.");
+                return result;
+            }
+        }
+        return result;
     }
 }

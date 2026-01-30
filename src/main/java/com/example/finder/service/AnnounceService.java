@@ -11,8 +11,10 @@ import com.example.finder.exception.entity.UserNotFoundException;
 import com.example.finder.exception.file.FileException;
 import com.example.finder.model.*;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
+import com.example.finder.repository.specification.DiscussionSpecifications;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.AnnounceError;
@@ -270,4 +272,33 @@ public class AnnounceService {
             }
         }
     }
+
+    public ResponseEntity<?> forceChangeRecordStatus(UUID uuid, AvailableRecordStatus recordStatus) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            if (!requester.isAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            RecordStatus newRecordStatus = recordStatusRepository
+                    .findByName(recordStatus.getDisplayName())
+                    .orElseThrow(() -> new InvalidRequestException(
+                            "The provided record status is invalid"));
+            announce.setRecordStatus(newRecordStatus);
+            announceRepository.save(announce);
+            return ApiResponseFactory.success(new AnnounceDto(announce, imageUtil.getBaseWebPathForPhotos()));
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
 }
