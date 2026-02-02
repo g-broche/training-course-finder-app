@@ -29,11 +29,14 @@ public class EnumUtil {
     public AvailableRecordStatus recordStatusMatcher(String recordStatus) {
         AvailableRecordStatus result = null;
         if (recordStatus != null) {
-            try {
-                result = AvailableRecordStatus.valueOf(recordStatus.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                System.out.println("Invalid announce type filter: " + recordStatus + "; defaulting to null.");
-                return result;
+            for (AvailableRecordStatus status : AvailableRecordStatus.values()) {
+                if (status.getDisplayName().equalsIgnoreCase(recordStatus)) {
+                    result = status;
+                    break;
+                }
+            }
+            if (result == null) {
+                System.out.println("Invalid record status: " + recordStatus + "; defaulting to null.");
             }
         }
         return result;
