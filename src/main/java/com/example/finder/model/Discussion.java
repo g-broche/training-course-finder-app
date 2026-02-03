@@ -1,5 +1,6 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.AdminDiscussionDTO;
 import com.example.finder.dto.output.DetailedDiscussionDTO;
 import com.example.finder.dto.output.DiscussionDTO;
 
@@ -115,12 +116,30 @@ public class Discussion {
         message.setDiscussion(null);
     }
 
+    public Timestamp getLastMessageTimestamp() {
+        if (messages.isEmpty()) {
+            return null;
+        }
+        Message lastMessage = messages.stream()
+                .max((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
+                .orElse(null);
+        return lastMessage != null ? lastMessage.getCreatedAt() : null;
+    }
+
+    public boolean hasReportedMessage() {
+        return messages.stream().anyMatch(Message::isReported);
+    }
+
     public DetailedDiscussionDTO toDetailedDiscussionDTO() {
         return new DetailedDiscussionDTO(this);
     }
 
     public DiscussionDTO toDiscussionDTO() {
         return new DiscussionDTO(this);
+    }
+
+    public AdminDiscussionDTO toAdminDiscussionDTO() {
+        return new AdminDiscussionDTO(this);
     }
 
     public String getExcerpt() {

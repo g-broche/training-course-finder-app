@@ -34,7 +34,7 @@ public class AdminAnnounceController {
     @GetMapping("/{uuid}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAnnounceDetail(@PathVariable UUID uuid) {
-        boolean mustHiddenRecordBeDisplayed = false;
+        boolean mustHiddenRecordBeDisplayed = true;
         return announceService.getAnnounceDetail(uuid, mustHiddenRecordBeDisplayed);
     }
 

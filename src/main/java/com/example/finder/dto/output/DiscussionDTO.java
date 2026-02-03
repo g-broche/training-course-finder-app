@@ -22,6 +22,7 @@ public class DiscussionDTO {
     private int messageCount;
     private Timestamp createdAt;
     private Timestamp editedAt;
+    private Timestamp lastMessageDate;
 
     public DiscussionDTO(Discussion discussion) {
         this.discussionId = discussion.getId();
@@ -33,6 +34,7 @@ public class DiscussionDTO {
         this.excerpt = discussion.getExcerpt();
         this.createdAt = discussion.getCreatedAt();
         this.editedAt = discussion.getEditedAt();
+        this.lastMessageDate = discussion.getLastMessageTimestamp();
     }
 
     public UUID getDiscussionId() {
@@ -69,5 +71,9 @@ public class DiscussionDTO {
 
     public String getExcerpt() {
         return excerpt;
+    }
+
+    public Timestamp getLastMessageDate() {
+        return lastMessageDate;
     }
 }

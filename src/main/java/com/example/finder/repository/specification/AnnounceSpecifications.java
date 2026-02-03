@@ -56,4 +56,14 @@ public class AnnounceSpecifications {
                                         cb.equal(discussionJoin.get("interlocutor").get("id"), interlocutorId));
                 };
         }
+
+        public static Specification<Announce> hasDiscussion(UUID discussionId) {
+                return (root, query, cb) -> {
+                        if (discussionId == null) {
+                                return cb.conjunction();
+                        }
+                        var discussionJoin = root.join("discussions");
+                        return cb.equal(discussionJoin.get("id"), discussionId);
+                };
+        }
 }

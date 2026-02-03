@@ -96,12 +96,14 @@ public class AnnounceService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAnnounceDetail(UUID uuid, Boolean mustShowHidden) {
         try {
-            List<Specification<Announce>> specList = new ArrayList<>();
+            List<Specification<Announce>> specList = new ArrayList<>(
+                    Arrays.asList(
+                            AnnounceSpecifications.hasId(uuid)));
             if (!mustShowHidden) {
                 specList.add(AnnounceSpecifications.hasShownStatus());
             }
             Specification<Announce> spec = Specification.allOf(specList);
-            Announce foundAnnounce = announceRepository.findById(uuid).orElse(null);
+            Announce foundAnnounce = announceRepository.findOne(spec).orElse(null);
             if (foundAnnounce == null) {
                 return ApiResponseFactory.notFound("No corresponding announce was found");
             }

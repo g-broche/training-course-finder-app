@@ -41,9 +41,6 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired

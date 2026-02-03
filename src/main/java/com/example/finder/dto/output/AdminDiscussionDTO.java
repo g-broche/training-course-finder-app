@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
-public class DetailedDiscussionDTO {
+public class AdminDiscussionDTO {
     private UUID discussionId;
     private UUID announceId;
     private String announceTitle;
@@ -20,11 +20,12 @@ public class DetailedDiscussionDTO {
     private OtherUserDto announceResponder;
     private String interactivityStateName;
     private List<MessageDTO> messages;
+    private boolean hasReportedMessage;
     private Timestamp createdAt;
     private Timestamp editedAt;
     private Timestamp lastMessageDate;
 
-    public DetailedDiscussionDTO(Discussion discussion) {
+    public AdminDiscussionDTO(Discussion discussion) {
         this.discussionId = discussion.getId();
         this.announceId = discussion.getAnnounce().getId();
         this.announceAuthor = new OtherUserDto(discussion.getAnnounce().getAuthor());
@@ -38,6 +39,7 @@ public class DetailedDiscussionDTO {
         this.editedAt = discussion.getEditedAt();
         this.announceTitle = discussion.getAnnounce().getTitle();
         this.lastMessageDate = discussion.getLastMessageTimestamp();
+        this.hasReportedMessage = discussion.hasReportedMessage();
     }
 
     public UUID getDiscussionId() {
@@ -82,5 +84,9 @@ public class DetailedDiscussionDTO {
 
     public Timestamp getLastMessageDate() {
         return lastMessageDate;
+    }
+
+    public boolean getHasReportedMessage() {
+        return hasReportedMessage;
     }
 }
