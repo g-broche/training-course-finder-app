@@ -1,5 +1,6 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.AdminDetailedDiscussionDTO;
 import com.example.finder.dto.output.AdminDiscussionDTO;
 import com.example.finder.dto.output.DetailedDiscussionDTO;
 import com.example.finder.dto.output.DiscussionDTO;
@@ -140,6 +141,10 @@ public class Discussion {
 
     public AdminDiscussionDTO toAdminDiscussionDTO() {
         return new AdminDiscussionDTO(this);
+    }
+
+    public AdminDetailedDiscussionDTO toAdminDetailedDiscussionDTO() {
+        return new AdminDetailedDiscussionDTO(this);
     }
 
     public String getExcerpt() {

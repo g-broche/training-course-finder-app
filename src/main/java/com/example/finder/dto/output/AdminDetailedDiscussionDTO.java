@@ -12,26 +12,29 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
-public class AdminDiscussionDTO {
+public class AdminDetailedDiscussionDTO {
     private UUID discussionId;
     private UUID announceId;
     private String announceTitle;
     private OtherUserDto announceAuthor;
     private OtherUserDto announceResponder;
     private String interactivityStateName;
-    private int messageCount;
+    private List<MessageDTO> messages;
     private boolean hasReportedMessage;
     private Timestamp createdAt;
     private Timestamp editedAt;
     private Timestamp lastMessageDate;
 
-    public AdminDiscussionDTO(Discussion discussion) {
+    public AdminDetailedDiscussionDTO(Discussion discussion) {
         this.discussionId = discussion.getId();
         this.announceId = discussion.getAnnounce().getId();
         this.announceAuthor = new OtherUserDto(discussion.getAnnounce().getAuthor());
         this.announceResponder = new OtherUserDto(discussion.getInterlocutor());
         this.interactivityStateName = discussion.getInteractivityState().getName();
-        this.messageCount = discussion.getMessages().size();
+        this.messages = discussion.getMessages().stream()
+                .sorted((m1, m2) -> Integer.compare(m1.getIndex(), m2.getIndex()))
+                .map(Message::toDto)
+                .toList();
         this.createdAt = discussion.getCreatedAt();
         this.editedAt = discussion.getEditedAt();
         this.announceTitle = discussion.getAnnounce().getTitle();
@@ -59,8 +62,8 @@ public class AdminDiscussionDTO {
         return interactivityStateName;
     }
 
-    public int getMessageCount() {
-        return messageCount;
+    public List<MessageDTO> getMessages() {
+        return messages;
     }
 
     public Timestamp getCreatedAt() {
