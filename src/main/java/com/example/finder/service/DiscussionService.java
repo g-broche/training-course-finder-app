@@ -280,7 +280,7 @@ public class DiscussionService {
                 return ApiResponseFactory
                         .notFound("There is no discussion matching the request");
             }
-            return ApiResponseFactory.success(discussion.toDetailedDiscussionDTO());
+            return ApiResponseFactory.success(discussion.toAdminDetailedDiscussionDTO());
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponseFactory.internalError();
