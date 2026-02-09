@@ -182,7 +182,6 @@ public class DiscussionService {
      *                       admin board)
      * @return api response with data according the the given parameters
      */
-    @Transactional(readOnly = true)
     public ResponseEntity<?> getPaginatedDiscussions(
             int page,
             int size,
@@ -234,20 +233,18 @@ public class DiscussionService {
      * a
      * ApiResponse
      * 
-     * @param page           page to get
-     * @param size           amount of discussions per page
-     * @param mustShowHidden false only get discussions with a record status of
-     *                       Shown,
-     *                       true doesn't filter based on such status (intended for
-     *                       admin board)
-     * @return api response with data according the the given parameters
+     * @param page    page to get
+     * @param size    amount of discussions per page
+     * @param orderBy field to order the discussions by
+     * @return api response with data according the given parameters
      */
-    @Transactional(readOnly = true)
     public ResponseEntity<?> getPaginatedDiscussionsForModeration(
             int page,
-            int size) {
+            int size,
+            String orderBy) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             boolean isAdmin = requester.isAdmin();
             if (!isAdmin) {
                 UnauthorizedException unauthorizedException = new UnauthorizedException();
@@ -255,9 +252,46 @@ public class DiscussionService {
                 return ApiResponseFactory.unauthorized(unauthorizedException.getMessage());
             }
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
-            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-            Page<Discussion> discussionPage = discussionRepository.findAll(pageable);
+            Page<Discussion> discussionPage;
+
+            // Determine ordering strategy based on orderBy parameter
+            if ("lastMessageDate".equalsIgnoreCase(orderBy)) {
+                // Order by the most recent message in each discussion
+                // Step 1: Get all IDs in the correct order
+                List<String> orderedIds = discussionRepository.findDiscussionIdsOrderByLastMessageDate();
+
+                // Step 2: Apply pagination to the ID list
+                int start = page * size;
+                int end = Math.min(start + size, orderedIds.size());
+                List<String> paginatedIds = orderedIds.subList(start, end);
+
+                // Step 3: Convert String IDs to UUIDs and fetch entities
+                List<UUID> uuidList = paginatedIds.stream()
+                        .map(UUID::fromString)
+                        .toList();
+                List<Discussion> discussions = discussionRepository.findAllById(uuidList);
+
+                // Step 4: Maintain the order from the original ID list
+                List<Discussion> orderedDiscussions = uuidList.stream()
+                        .map(uuid -> discussions.stream()
+                                .filter(d -> d.getId().equals(uuid))
+                                .findFirst()
+                                .orElse(null))
+                        .filter(d -> d != null)
+                        .toList();
+
+                // Step 5: Manually create a Page object
+                discussionPage = new org.springframework.data.domain.PageImpl<>(
+                        orderedDiscussions,
+                        PageRequest.of(page, size),
+                        orderedIds.size());
+            } else {
+                // Default: order by discussion creation date (createdAt)
+                Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+                discussionPage = discussionRepository.findAll(pageable);
+            }
+
             Page<AdminDiscussionDTO> discussionDtoPage = discussionPage.map((it) -> it.toAdminDiscussionDTO());
             var paginatedResult = PaginatedResponse.from(discussionDtoPage);
             return ApiResponseFactory.success(paginatedResult);

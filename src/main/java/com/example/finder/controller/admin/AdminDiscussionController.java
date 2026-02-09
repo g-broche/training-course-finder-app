@@ -23,15 +23,12 @@ import java.util.UUID;
 @RequestMapping("api/admin/discussions")
 public class AdminDiscussionController {
 
-    private final AnnounceService announceService;
     private final DiscussionService discussionService;
     private final EnumUtil enumUtil;
 
     public AdminDiscussionController(
-            AnnounceService announceService,
             DiscussionService discussionService,
             EnumUtil enumUtil) {
-        this.announceService = announceService;
         this.discussionService = discussionService;
         this.enumUtil = enumUtil;
     }
@@ -46,10 +43,12 @@ public class AdminDiscussionController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getPaginatedDiscussions(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdDate") String orderBy) {
         return discussionService.getPaginatedDiscussionsForModeration(
                 page,
-                size);
+                size,
+                orderBy);
     }
 
     @GetMapping("/{uuid}/related-announce")

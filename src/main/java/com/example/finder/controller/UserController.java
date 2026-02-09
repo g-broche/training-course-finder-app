@@ -12,15 +12,11 @@ import java.util.UUID;
 @RequestMapping("api/users")
 public class UserController {
     private final UserService userService;
-    private final PaginationConfig paginationConfig;
-
 
     public UserController(
             UserService userService,
-            PaginationConfig paginationConfig
-    ) {
+            PaginationConfig paginationConfig) {
         this.userService = userService;
-        this.paginationConfig = paginationConfig;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -33,8 +29,7 @@ public class UserController {
     @GetMapping("/paginated")
     public ResponseEntity<?> getPaginatedUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
         return userService.getPaginatedUsers(page, size);
     }
 

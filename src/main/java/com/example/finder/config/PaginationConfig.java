@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PaginationConfig {
-    private final int maxResultsPerPage = 50;
+    private final int maxResultsPerPage = 20;
 
     public int getMaxResultsPerPage() {
         return maxResultsPerPage;
