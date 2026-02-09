@@ -4,6 +4,7 @@ import com.example.finder.config.PaginationConfig;
 import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestMessage;
 import com.example.finder.dto.input.RequestRecordStatus;
+import com.example.finder.dto.output.AdminDetailedDiscussionDTO;
 import com.example.finder.dto.output.AdminDiscussionDTO;
 import com.example.finder.dto.output.AnnounceDto;
 import com.example.finder.dto.output.DetailedDiscussionDTO;
@@ -12,6 +13,7 @@ import com.example.finder.exception.action.InvalidRequestException;
 import com.example.finder.exception.action.UnauthorizedException;
 import com.example.finder.model.*;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableInteractivityState;
 import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
@@ -355,4 +357,33 @@ public class DiscussionService {
             return ApiResponseFactory.internalError();
         }
     }
+
+    public ResponseEntity<?> forceChangeInteractivityState(UUID uuid, AvailableInteractivityState interactivityState) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            if (!requester.isAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Discussion> spec = Specification.allOf(
+                    DiscussionSpecifications.hasId(uuid));
+
+            Discussion discussion = discussionRepository.findOne(spec).orElse(null);
+            if (discussion == null) {
+                return ApiResponseFactory
+                        .notFound("There is no discussion with id: " + uuid);
+            }
+            InteractivityState newInteractivityState = interactivityStateRepository
+                    .findByName(interactivityState.getDisplayName())
+                    .orElseThrow(() -> new InvalidRequestException(
+                            "The provided interactivity state is invalid"));
+            discussion.setInteractivityState(newInteractivityState);
+            discussionRepository.save(discussion);
+            return ApiResponseFactory.success(new AdminDetailedDiscussionDTO(discussion));
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
 }

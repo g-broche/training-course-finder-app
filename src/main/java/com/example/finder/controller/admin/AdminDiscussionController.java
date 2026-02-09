@@ -1,8 +1,13 @@
 package com.example.finder.controller.admin;
 
+import com.example.finder.dto.input.RequestAnnounceStatus;
+import com.example.finder.dto.input.RequestInteractivityState;
 import com.example.finder.dto.input.RequestRecordStatus;
+import com.example.finder.model.enums.AvailableAnnounceStatus;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableInteractivityState;
 import com.example.finder.model.enums.AvailableRecordStatus;
+import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.EnumUtil;
@@ -52,5 +57,19 @@ public class AdminDiscussionController {
     public ResponseEntity<?> getRelatedAnnounce(@PathVariable UUID uuid) {
         boolean withHiddenData = true;
         return discussionService.getRelatedAnnounce(uuid, withHiddenData);
+    }
+
+    @PutMapping("/{uuid}/interactivity")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateInteractivity(
+            @PathVariable UUID uuid,
+            @RequestBody RequestInteractivityState request) {
+        AvailableInteractivityState interactivityState = enumUtil
+                .interactivityStateMatcher(request.getInteractivityState());
+        if (interactivityState == null) {
+            return ApiResponseFactory
+                    .badRequest("Invalid interactivityState parameter. Must be 'open' or 'close'.");
+        }
+        return discussionService.forceChangeInteractivityState(uuid, interactivityState);
     }
 }
