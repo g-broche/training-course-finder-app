@@ -132,6 +132,11 @@ public class DiscussionService {
             firstMessage.setRecordStatus(shownStatus);
             firstMessage.setReported(false);
             messageRepository.save(firstMessage);
+
+            // Update discussion's last message timestamp
+            newDiscussion.setLastMessageTimestamp(firstMessage.getCreatedAt());
+            discussionRepository.save(newDiscussion);
+
             Discussion savedDiscussion = discussionRepository.findById(newDiscussion.getId())
                     .orElseThrow();
             return ApiResponseFactory.success(savedDiscussion.toDetailedDiscussionDTO());
@@ -257,35 +262,11 @@ public class DiscussionService {
 
             // Determine ordering strategy based on orderBy parameter
             if ("lastMessageDate".equalsIgnoreCase(orderBy)) {
-                // Order by the most recent message in each discussion
-                // Step 1: Get all IDs in the correct order
-                List<String> orderedIds = discussionRepository.findDiscussionIdsOrderByLastMessageDate();
-
-                // Step 2: Apply pagination to the ID list
-                int start = page * size;
-                int end = Math.min(start + size, orderedIds.size());
-                List<String> paginatedIds = orderedIds.subList(start, end);
-
-                // Step 3: Convert String IDs to UUIDs and fetch entities
-                List<UUID> uuidList = paginatedIds.stream()
-                        .map(UUID::fromString)
-                        .toList();
-                List<Discussion> discussions = discussionRepository.findAllById(uuidList);
-
-                // Step 4: Maintain the order from the original ID list
-                List<Discussion> orderedDiscussions = uuidList.stream()
-                        .map(uuid -> discussions.stream()
-                                .filter(d -> d.getId().equals(uuid))
-                                .findFirst()
-                                .orElse(null))
-                        .filter(d -> d != null)
-                        .toList();
-
-                // Step 5: Manually create a Page object
-                discussionPage = new org.springframework.data.domain.PageImpl<>(
-                        orderedDiscussions,
-                        PageRequest.of(page, size),
-                        orderedIds.size());
+                // Order by the most recent message in each discussion using the cached field
+                Pageable pageable = PageRequest.of(page, size,
+                        Sort.by(Sort.Direction.DESC, "lastMessageTimestamp")
+                                .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+                discussionPage = discussionRepository.findAll(pageable);
             } else {
                 // Default: order by discussion creation date (createdAt)
                 Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -358,6 +339,10 @@ public class DiscussionService {
             newMessage.setRecordStatus(shownStatus);
             newMessage.setReported(false);
             messageRepository.save(newMessage);
+
+            // Update discussion's last message timestamp
+            discussion.setLastMessageTimestamp(newMessage.getCreatedAt());
+            discussionRepository.save(discussion);
 
             return ApiResponseFactory.success("Message added successfully");
         } catch (Exception e) {

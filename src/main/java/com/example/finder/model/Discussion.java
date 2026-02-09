@@ -47,6 +47,9 @@ public class Discussion {
     @Column(name = "edited_at")
     private Timestamp editedAt;
 
+    @Column(name = "last_message_timestamp")
+    private Timestamp lastMessageTimestamp;
+
     public Discussion() {
     }
 
@@ -103,6 +106,14 @@ public class Discussion {
         this.editedAt = editedAt;
     }
 
+    public Timestamp getLastMessageTimestamp() {
+        return lastMessageTimestamp;
+    }
+
+    public void setLastMessageTimestamp(Timestamp lastMessageTimestamp) {
+        this.lastMessageTimestamp = lastMessageTimestamp;
+    }
+
     public List<Message> getMessages() {
         return messages;
     }
@@ -110,6 +121,10 @@ public class Discussion {
     public void addMessage(Message message) {
         messages.add(message);
         message.setDiscussion(this);
+        // Update last message timestamp when a new message is added
+        if (message.getCreatedAt() != null) {
+            this.lastMessageTimestamp = message.getCreatedAt();
+        }
     }
 
     public void removeMessage(Message message) {
@@ -117,7 +132,7 @@ public class Discussion {
         message.setDiscussion(null);
     }
 
-    public Timestamp getLastMessageTimestamp() {
+    public Timestamp getLastMessageTimestampComputed() {
         if (messages.isEmpty()) {
             return null;
         }
