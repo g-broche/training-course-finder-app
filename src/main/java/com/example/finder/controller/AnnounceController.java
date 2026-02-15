@@ -90,6 +90,36 @@ public class AnnounceController {
         }
     }
 
+    @PostMapping(value = "/lost/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createNewLostAnnounce(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "latitude", required = false) String latitude,
+            @RequestParam(value = "longitude", required = false) String longitude,
+            @RequestParam("city") String city,
+            @RequestParam("country") String country,
+            @RequestParam("relevantDate") String relevantDate,
+            @RequestParam("categoryId") String categoryId,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        try {
+            RequestAnnounce requestAnnounce = new RequestAnnounce();
+            requestAnnounce.setTitle(title);
+            requestAnnounce.setDescription(description);
+            requestAnnounce.setLatitude(latitude);
+            requestAnnounce.setLongitude(longitude);
+            requestAnnounce.setCity(city);
+            requestAnnounce.setCountry(country);
+            requestAnnounce.setRelevantDate(LocalDate.parse(relevantDate));
+            requestAnnounce.setCategoryId(Long.valueOf(categoryId));
+
+            return announceService.createNewLostAnnounce(requestAnnounce, image);
+
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/{uuid}/discussions/new")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createNewDiscussion(

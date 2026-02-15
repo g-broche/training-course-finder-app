@@ -294,6 +294,126 @@ public class AnnounceService {
         }
     }
 
+    /**
+     * Create a new lost object announce
+     * 
+     * @param request       data related to the announce
+     * @param receivedImage image provided for the item (optional)
+     * @return api response with DTO representation of the created announce
+     */
+    @Transactional
+    public ResponseEntity<?> createNewLostAnnounce(
+            RequestAnnounce request,
+            MultipartFile receivedImage) {
+        // validate received image only if provided
+        if (receivedImage != null && !receivedImage.isEmpty()) {
+            try {
+                validatorImage.validateImage(receivedImage);
+            } catch (FileException e) {
+                return ApiResponseFactory.badRequest(e.getMessage());
+            }
+        }
+
+        // creates variable out of try scope for use during catch
+        String savedImageName = null;
+        boolean isSuccess = false;
+
+        try {
+            // get requester data using the token provided with the request
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+
+            // sanitize and validate request data
+            RequestAnnounce sanitizedRequest = sanitizerUtil.sanitizeAnnounceInputs(request);
+            List<ErrorDto> validationErrors = validatorAnnounce.validateAnnounceInputs(sanitizedRequest);
+            if (!validationErrors.isEmpty()) {
+                return ApiResponseFactory.badRequest(
+                        AnnounceError.INVALID_CREATION_DATA.getErrorMessage(),
+                        validationErrors);
+            }
+
+            // get default announce relations
+            AnnounceType lostType = announceTypeRepository.getLostAnnounceTypeOrThrow();
+            AnnounceStatus unsolvedStatus = announceStatusRepository.getUnsolvedAnnounceStatusOrThrow();
+            RecordStatus showStatus = recordStatusRepository.getShownRecordStatusOrThrow();
+            InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
+
+            // get category based on request category id
+            Category itemCategory = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(CategoryNotFoundException::new);
+
+            // save image only if provided
+            if (receivedImage != null && !receivedImage.isEmpty()) {
+                // create a unique image name for storage and save image
+                savedImageName = ImageUtil.createImageName(lostType, itemCategory);
+                imageUtil.saveImage(receivedImage, savedImageName);
+            }
+
+            // instanciate new announce and set all its properties
+            Announce newAnnounce = new Announce(
+                    request.getTitle(),
+                    request.getDescription(),
+                    request.getRelevantDate(),
+                    request.getCity(),
+                    request.getCountry(),
+                    request.getLatitude(),
+                    request.getLongitude());
+
+            // set photo only if image was provided
+            if (savedImageName != null) {
+                newAnnounce.setPhoto(savedImageName);
+            }
+
+            newAnnounce.setAuthor(requester);
+            newAnnounce.setCategory(itemCategory);
+            newAnnounce.setType(lostType);
+            newAnnounce.setStatus(unsolvedStatus);
+            newAnnounce.setRecordStatus(showStatus);
+            newAnnounce.setInteractivityState(openState);
+
+            // save announce through ORM
+            announceRepository.save(newAnnounce);
+
+            // construct path to image and logs it for reference
+            String webPathToImage = null;
+            if (newAnnounce.getPhoto() != null) {
+                webPathToImage = imageUtil.getWebPathToPhoto(newAnnounce.getPhoto());
+                Printer.printLog("New announce: " + newAnnounce.getTitle() + " ; image -> " + webPathToImage);
+            } else {
+                Printer.printLog("New announce: " + newAnnounce.getTitle() + " ; no image");
+            }
+
+            // create DTO object based on the new announce to return the data in the
+            // response
+            AnnounceDto announceDto = new AnnounceDto(newAnnounce, webPathToImage);
+
+            // if this point is reached set isSuccess to true and return the response
+            isSuccess = true;
+            return ApiResponseFactory.success(announceDto);
+        } catch (UserNotFoundException e) {
+            return ApiResponseFactory.unauthorized("Invalid user or user is not logged");
+        } catch (IOException e) {
+            return ApiResponseFactory.internalError("An error occurred while processing the image");
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest("Invalid request sent to create a new item lost announce");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.internalError();
+        } finally {
+            // if an error occured during the process, delete the image if the error
+            // occurred after it was stored
+            if (!isSuccess && savedImageName != null) {
+                try {
+                    Files.deleteIfExists(imageUtil.getLocalImagePath(savedImageName));
+                    Printer.printLog("deleted file after failure");
+                } catch (Exception e) {
+                    Printer.printLog("failed to delete file");
+                    Printer.printErrorLogWithDetails(e);
+                }
+            }
+        }
+    }
+
     public ResponseEntity<?> forceChangeAnnounceType(UUID uuid, AvailableAnnounceTypes announceType) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
