@@ -145,7 +145,8 @@ public class AnnounceService {
             int page,
             int size,
             AvailableAnnounceTypes type,
-            String searchQuery,
+            String title,
+            String city,
             Long categoryId,
             Boolean mustShowHidden) {
         try {
@@ -154,10 +155,20 @@ public class AnnounceService {
                     : null;
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            List<Specification<Announce>> specList = new ArrayList<>(
-                    Arrays.asList(
-                            AnnounceSpecifications.hasCategory(categoryId),
-                            AnnounceSpecifications.hasSearch(searchQuery)));
+
+            List<Specification<Announce>> specList = new ArrayList<>();
+            if (title != null) {
+                specList.add(AnnounceSpecifications.matchTitle(title));
+            }
+            if (categoryId != null) {
+                specList.add(AnnounceSpecifications.hasCategory(categoryId));
+            }
+            if (title != null) {
+                specList.add(AnnounceSpecifications.matchTitle(title));
+            }
+            if (city != null) {
+                specList.add(AnnounceSpecifications.matchCity(city));
+            }
             if (announceTypeRequired != null) {
                 specList.add(AnnounceSpecifications.hasType(announceTypeRequired));
             }

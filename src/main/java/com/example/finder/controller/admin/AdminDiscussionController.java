@@ -43,12 +43,14 @@ public class AdminDiscussionController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getPaginatedDiscussions(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdDate") String orderBy) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdDate") String orderBy,
+            @RequestParam(defaultValue = "false") boolean onlyReported) {
         return discussionService.getPaginatedDiscussionsForModeration(
                 page,
                 size,
-                orderBy);
+                orderBy,
+                onlyReported);
     }
 
     @GetMapping("/{uuid}/related-announce")

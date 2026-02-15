@@ -50,7 +50,8 @@ public class AdminAnnounceController {
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String city,
             @RequestParam(required = false) Long categoryId) {
         boolean mustHiddenRecordBeDisplayed = true;
         AvailableAnnounceTypes typeFilter = enumUtil.announceTypeMatcher(type);
@@ -58,7 +59,8 @@ public class AdminAnnounceController {
                 page,
                 size,
                 typeFilter,
-                search,
+                title,
+                city,
                 categoryId,
                 mustHiddenRecordBeDisplayed);
     }

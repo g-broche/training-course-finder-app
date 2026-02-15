@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.util.UUID;
 
+import com.example.finder.dto.output.UserStatusDto;
+
 @Entity
 public class UserStatus {
     @Id
@@ -13,7 +15,8 @@ public class UserStatus {
     @Column(name = "name", nullable = false, length = 30)
     private String name;
 
-    public UserStatus() {}
+    public UserStatus() {
+    }
 
     public UserStatus(String name) {
         this.setName(name);
@@ -33,5 +36,9 @@ public class UserStatus {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public UserStatusDto toDto() {
+        return new UserStatusDto(this);
     }
 }

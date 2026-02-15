@@ -58,4 +58,11 @@ public class DiscussionSpecifications {
                                 root.get("interactivityState").get("name"),
                                 AvailableInteractivityState.OPEN.toString());
         }
+
+        public static Specification<Discussion> hasReportedMessage() {
+                return (root, query, cb) -> {
+                        var messageJoin = root.join("messages");
+                        return cb.isTrue(messageJoin.get("isReported"));
+                };
+        }
 }

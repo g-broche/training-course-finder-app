@@ -36,7 +36,7 @@ public class Discussion {
     @JoinColumn(name = "interactivity_state_id", nullable = false)
     private InteractivityState interactivityState;
 
-    @OneToMany(mappedBy = "discussion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "discussion", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     private List<Message> messages = new ArrayList<>();
 
     @CreationTimestamp

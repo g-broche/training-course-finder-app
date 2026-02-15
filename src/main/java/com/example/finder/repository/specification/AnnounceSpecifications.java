@@ -21,10 +21,16 @@ public class AnnounceSpecifications {
                                 : cb.equal(root.get("category").get("id"), categoryId);
         }
 
-        public static Specification<Announce> hasSearch(String search) {
+        public static Specification<Announce> matchTitle(String search) {
                 return (root, query, cb) -> search == null || search.isEmpty()
                                 ? cb.conjunction()
                                 : cb.like(cb.lower(root.get("title")), "%" + search.toLowerCase() + "%");
+        }
+
+        public static Specification<Announce> matchCity(String search) {
+                return (root, query, cb) -> search == null || search.isEmpty()
+                                ? cb.conjunction()
+                                : cb.like(cb.lower(root.get("city")), "%" + search.toLowerCase() + "%");
         }
 
         public static Specification<Announce> hasShownStatus() {

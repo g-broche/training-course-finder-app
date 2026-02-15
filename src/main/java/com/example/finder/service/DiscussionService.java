@@ -246,7 +246,8 @@ public class DiscussionService {
     public ResponseEntity<?> getPaginatedDiscussionsForModeration(
             int page,
             int size,
-            String orderBy) {
+            String orderBy,
+            boolean onlyReported) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
@@ -257,7 +258,11 @@ public class DiscussionService {
                 return ApiResponseFactory.unauthorized(unauthorizedException.getMessage());
             }
             size = Math.min(size, paginationConfig.getMaxResultsPerPage());
-
+            List<Specification<Discussion>> specList = new ArrayList<>();
+            if (onlyReported) {
+                specList.add(DiscussionSpecifications.hasReportedMessage());
+            }
+            Specification<Discussion> spec = Specification.allOf(specList);
             Page<Discussion> discussionPage;
 
             // Determine ordering strategy based on orderBy parameter
@@ -266,11 +271,11 @@ public class DiscussionService {
                 Pageable pageable = PageRequest.of(page, size,
                         Sort.by(Sort.Direction.DESC, "lastMessageTimestamp")
                                 .and(Sort.by(Sort.Direction.DESC, "createdAt")));
-                discussionPage = discussionRepository.findAll(pageable);
+                discussionPage = discussionRepository.findAll(spec, pageable);
             } else {
                 // Default: order by discussion creation date (createdAt)
                 Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-                discussionPage = discussionRepository.findAll(pageable);
+                discussionPage = discussionRepository.findAll(spec, pageable);
             }
 
             Page<AdminDiscussionDTO> discussionDtoPage = discussionPage.map((it) -> it.toAdminDiscussionDTO());
