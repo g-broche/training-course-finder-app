@@ -1,23 +1,46 @@
 package com.example.finder.service;
 
+import com.example.finder.config.PaginationConfig;
 import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestMessage;
+import com.example.finder.dto.input.RequestRecordStatus;
+import com.example.finder.dto.output.AdminDetailedDiscussionDTO;
+import com.example.finder.dto.output.AdminDiscussionDTO;
+import com.example.finder.dto.output.AnnounceDto;
+import com.example.finder.dto.output.DetailedDiscussionDTO;
 import com.example.finder.dto.output.ErrorDto;
+import com.example.finder.exception.action.InvalidRequestException;
+import com.example.finder.exception.action.UnauthorizedException;
 import com.example.finder.model.*;
+import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableInteractivityState;
+import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
 import com.example.finder.repository.specification.DiscussionSpecifications;
 import com.example.finder.response.ApiResponseFactory;
+import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.DiscussionError;
+import com.example.finder.utils.ImageUtil;
 import com.example.finder.utils.SanitizerUtil;
 import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorDiscussionMessage;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +57,8 @@ public class DiscussionService {
     private final SanitizerUtil sanitizerUtil;
     private final ValidatorAuth validatorAuth;
     private final ValidatorDiscussionMessage validatorDiscussionMessage;
+    private final ImageUtil imageUtil;
+    private final PaginationConfig paginationConfig;
 
     public DiscussionService(
             AnnounceRepository announceRepository,
@@ -43,7 +68,9 @@ public class DiscussionService {
             RecordStatusRepository recordStatusRepository,
             SanitizerUtil sanitizerUtil,
             ValidatorAuth validatorAuth,
-            ValidatorDiscussionMessage validatorDiscussionMessage) {
+            ValidatorDiscussionMessage validatorDiscussionMessage,
+            ImageUtil imageUtil,
+            PaginationConfig paginationConfig) {
         this.discussionRepository = discussionRepository;
         this.announceRepository = announceRepository;
         this.messageRepository = messageRepository;
@@ -52,6 +79,8 @@ public class DiscussionService {
         this.sanitizerUtil = sanitizerUtil;
         this.validatorAuth = validatorAuth;
         this.validatorDiscussionMessage = validatorDiscussionMessage;
+        this.imageUtil = imageUtil;
+        this.paginationConfig = paginationConfig;
     }
 
     @Transactional
@@ -103,6 +132,11 @@ public class DiscussionService {
             firstMessage.setRecordStatus(shownStatus);
             firstMessage.setReported(false);
             messageRepository.save(firstMessage);
+
+            // Update discussion's last message timestamp
+            newDiscussion.setLastMessageTimestamp(firstMessage.getCreatedAt());
+            discussionRepository.save(newDiscussion);
+
             Discussion savedDiscussion = discussionRepository.findById(newDiscussion.getId())
                     .orElseThrow();
             return ApiResponseFactory.success(savedDiscussion.toDetailedDiscussionDTO());
@@ -140,6 +174,42 @@ public class DiscussionService {
         }
     }
 
+    /**
+     * get page of discussions depending on given arguments and returns the data in
+     * a
+     * ApiResponse
+     * 
+     * @param page           page to get
+     * @param size           amount of discussions per page
+     * @param mustShowHidden false only get discussions with a record status of
+     *                       Shown,
+     *                       true doesn't filter based on such status (intended for
+     *                       admin board)
+     * @return api response with data according the the given parameters
+     */
+    public ResponseEntity<?> getPaginatedDiscussions(
+            int page,
+            int size,
+            Boolean mustShowHidden) {
+        try {
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            List<Specification<Discussion>> specList = new ArrayList<>();
+            if (!mustShowHidden) {
+                specList.add(DiscussionSpecifications.hasShownStatus());
+            }
+            Specification<Discussion> spec = Specification.allOf(specList);
+
+            Page<Discussion> discussionPage = discussionRepository.findAll(spec, pageable);
+            Page<DetailedDiscussionDTO> discussionDtoPage = discussionPage.map((it) -> it.toDetailedDiscussionDTO());
+            var paginatedResult = PaginatedResponse.from(discussionDtoPage);
+            return ApiResponseFactory.success(paginatedResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
     public ResponseEntity<?> getDiscussion(UUID uuid, boolean withHiddenAnnounce) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
@@ -157,6 +227,82 @@ public class DiscussionService {
             }
             return ApiResponseFactory.success(discussion.toDetailedDiscussionDTO());
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    /**
+     * get page of discussions depending on given arguments and returns the data in
+     * a
+     * ApiResponse
+     * 
+     * @param page    page to get
+     * @param size    amount of discussions per page
+     * @param orderBy field to order the discussions by
+     * @return api response with data according the given parameters
+     */
+    public ResponseEntity<?> getPaginatedDiscussionsForModeration(
+            int page,
+            int size,
+            String orderBy,
+            boolean onlyReported) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            boolean isAdmin = requester.isAdmin();
+            if (!isAdmin) {
+                UnauthorizedException unauthorizedException = new UnauthorizedException();
+                System.out.println(unauthorizedException.getMessage());
+                return ApiResponseFactory.unauthorized(unauthorizedException.getMessage());
+            }
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            List<Specification<Discussion>> specList = new ArrayList<>();
+            if (onlyReported) {
+                specList.add(DiscussionSpecifications.hasReportedMessage());
+            }
+            Specification<Discussion> spec = Specification.allOf(specList);
+            Page<Discussion> discussionPage;
+
+            // Determine ordering strategy based on orderBy parameter
+            if ("lastMessageDate".equalsIgnoreCase(orderBy)) {
+                // Order by the most recent message in each discussion using the cached field
+                Pageable pageable = PageRequest.of(page, size,
+                        Sort.by(Sort.Direction.DESC, "lastMessageTimestamp")
+                                .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+                discussionPage = discussionRepository.findAll(spec, pageable);
+            } else {
+                // Default: order by discussion creation date (createdAt)
+                Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+                discussionPage = discussionRepository.findAll(spec, pageable);
+            }
+
+            Page<AdminDiscussionDTO> discussionDtoPage = discussionPage.map((it) -> it.toAdminDiscussionDTO());
+            var paginatedResult = PaginatedResponse.from(discussionDtoPage);
+            return ApiResponseFactory.success(paginatedResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
+    public ResponseEntity<?> getDiscussionForModeration(UUID uuid) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            boolean isAdmin = requester.isAdmin();
+            if (!isAdmin) {
+                UnauthorizedException unauthorizedException = new UnauthorizedException();
+                System.out.println(unauthorizedException.getMessage());
+                return ApiResponseFactory.unauthorized(unauthorizedException.getMessage());
+            }
+
+            Discussion discussion = discussionRepository.findById(uuid).orElse(null);
+            if (discussion == null) {
+                return ApiResponseFactory
+                        .notFound("There is no discussion matching the request");
+            }
+            return ApiResponseFactory.success(discussion.toAdminDetailedDiscussionDTO());
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponseFactory.internalError();
@@ -199,6 +345,10 @@ public class DiscussionService {
             newMessage.setReported(false);
             messageRepository.save(newMessage);
 
+            // Update discussion's last message timestamp
+            discussion.setLastMessageTimestamp(newMessage.getCreatedAt());
+            discussionRepository.save(discussion);
+
             return ApiResponseFactory.success("Message added successfully");
         } catch (Exception e) {
             e.printStackTrace();
@@ -206,4 +356,58 @@ public class DiscussionService {
             return ApiResponseFactory.internalError();
         }
     }
+
+    public ResponseEntity<?> getRelatedAnnounce(UUID discussionUuid, boolean withHiddenData) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasDiscussion(discussionUuid));
+            if (!withHiddenData) {
+                spec = spec.and(AnnounceSpecifications.hasShownStatus());
+            }
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                System.out.println("No announce found for discussion UUID: " + discussionUuid + "; withHiddenData: "
+                        + withHiddenData);
+                return ApiResponseFactory.notFound("There is no announce matching this discussion");
+            }
+
+            AnnounceDto announceDto = new AnnounceDto(
+                    announce,
+                    imageUtil.getBaseWebPathForPhotos());
+            return ApiResponseFactory.success(announceDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
+    public ResponseEntity<?> forceChangeInteractivityState(UUID uuid, AvailableInteractivityState interactivityState) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            if (!requester.isAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Discussion> spec = Specification.allOf(
+                    DiscussionSpecifications.hasId(uuid));
+
+            Discussion discussion = discussionRepository.findOne(spec).orElse(null);
+            if (discussion == null) {
+                return ApiResponseFactory
+                        .notFound("There is no discussion with id: " + uuid);
+            }
+            InteractivityState newInteractivityState = interactivityStateRepository
+                    .findByName(interactivityState.getDisplayName())
+                    .orElseThrow(() -> new InvalidRequestException(
+                            "The provided interactivity state is invalid"));
+            discussion.setInteractivityState(newInteractivityState);
+            discussionRepository.save(discussion);
+            return ApiResponseFactory.success(new AdminDetailedDiscussionDTO(discussion));
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
 }

@@ -41,6 +41,12 @@ public class DiscussionSpecifications {
                                 cb.equal(root.get("interlocutor").get("id"), userId));
         }
 
+        public static Specification<Discussion> hasShownStatus() {
+                return (root, query, cb) -> cb.equal(
+                                root.get("recordStatus").get("name"),
+                                AvailableRecordStatus.SHOWN.toString());
+        }
+
         public static Specification<Discussion> mustHaveVisibleAnnounce() {
                 return (root, query, cb) -> cb.equal(
                                 root.get("announce").get("recordStatus").get("name"),
@@ -51,5 +57,12 @@ public class DiscussionSpecifications {
                 return (root, query, cb) -> cb.equal(
                                 root.get("interactivityState").get("name"),
                                 AvailableInteractivityState.OPEN.toString());
+        }
+
+        public static Specification<Discussion> hasReportedMessage() {
+                return (root, query, cb) -> {
+                        var messageJoin = root.join("messages");
+                        return cb.isTrue(messageJoin.get("isReported"));
+                };
         }
 }

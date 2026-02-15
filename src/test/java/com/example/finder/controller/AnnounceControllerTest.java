@@ -203,11 +203,11 @@ class AnnounceControllerTest extends UserRelatedTest {
         }
 
         @Test
-        void getPaginatedAnnounces_WithSearch() throws Exception {
+        void getPaginatedAnnounces_WithTitleSearch() throws Exception {
                 mockMvc.perform(get("/api/announces/paginated")
                                 .param("page", "0")
                                 .param("size", "10")
-                                .param("search", "Phone"))
+                                .param("title", "Phone"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data.content").isArray())
                                 .andExpect(jsonPath("$.data.content.length()").value(1))

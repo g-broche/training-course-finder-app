@@ -1,34 +1,47 @@
 package com.example.finder.dto.output;
 
-import com.example.finder.model.AppUser;
-import com.example.finder.model.Role;
-
 import java.sql.Timestamp;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DetailedUserDto {
+import com.example.finder.model.AppUser;
+import com.example.finder.model.Role;
+
+public class ExcerptUserDTOForAdmin {
+    private String id;
     private String firstName;
     private String lastName;
     private String displayName;
     private String email;
     private boolean isVerified;
+    private String status;
     private boolean hasAcceptedGdpr;
     private Timestamp createdAt;
-    private Set<RoleDto> roles;
+    private Set<String> roles;
+    private boolean hasHadReportedMessages;
 
-    public DetailedUserDto(AppUser user) {
+    public ExcerptUserDTOForAdmin(AppUser user) {
+        this.id = user.getId().toString();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.displayName = user.getDisplayName();
         this.email = user.getEmail();
         this.isVerified = user.getIsVerified();
         this.hasAcceptedGdpr = user.getHasAcceptGdpr();
+        this.status = user.getUserStatus().getName();
         this.roles = user.getRoles()
                 .stream()
-                .map(Role::toDto)
+                .map(Role::getName)
                 .collect(Collectors.toSet());
         this.createdAt = user.getCreatedAt();
+        this.hasHadReportedMessages = user
+                .getMessages()
+                .stream()
+                .anyMatch(message -> message.isReported());
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getFirstName() {
@@ -59,7 +72,15 @@ public class DetailedUserDto {
         return hasAcceptedGdpr;
     }
 
-    public Set<RoleDto> getRoles() {
+    public Set<String> getRoles() {
         return roles;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public boolean getHasHadReportedMessages() {
+        return hasHadReportedMessages;
     }
 }

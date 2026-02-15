@@ -1,7 +1,11 @@
 package com.example.finder.model;
 
 import com.example.finder.dto.output.DetailedUserDto;
+import com.example.finder.dto.output.ExcerptUserDTOForAdmin;
 import com.example.finder.dto.output.OtherUserDto;
+import com.example.finder.model.enums.AvailableRoles;
+import com.example.finder.model.enums.AvailableUserStatus;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,7 +14,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -60,6 +66,9 @@ public class AppUser {
     @JoinColumn(name = "record_status_id", nullable = false)
     private RecordStatus recordStatus;
 
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    private List<Message> messages = new ArrayList<>();
+
     public AppUser() {
     }
 
@@ -68,8 +77,7 @@ public class AppUser {
             String lastName,
             String displayName,
             String email,
-            String password
-    ) {
+            String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.displayName = displayName;
@@ -189,11 +197,39 @@ public class AppUser {
         this.recordStatus = recordStatus;
     }
 
-    public DetailedUserDto toDetailedUserDto(){
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
+
+    public DetailedUserDto toDetailedUserDto() {
         return new DetailedUserDto(this);
     }
 
-    public OtherUserDto toOtherUserDto(){
+    public OtherUserDto toOtherUserDto() {
         return new OtherUserDto(this);
+    }
+
+    public ExcerptUserDTOForAdmin toExcerptUserDTOForAdmin() {
+        return new ExcerptUserDTOForAdmin(this);
+    }
+
+    public boolean isAdmin() {
+        return roles.stream()
+                .anyMatch(role -> AvailableRoles.ADMIN.getDisplayName()
+                        .equalsIgnoreCase(role.getName()));
+    }
+
+    public boolean isBanned() {
+        return AvailableUserStatus.BANNED.getDisplayName()
+                .equalsIgnoreCase(userStatus.getName());
+    }
+
+    public boolean isAllowed() {
+        return AvailableUserStatus.ALLOWED.getDisplayName()
+                .equalsIgnoreCase(userStatus.getName());
     }
 }

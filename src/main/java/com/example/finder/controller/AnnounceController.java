@@ -45,7 +45,8 @@ public class AnnounceController {
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String city,
             @RequestParam(required = false) Long categoryId) {
         boolean mustHiddenRecordBeDisplayed = false;
         AvailableAnnounceTypes typeFilter = enumUtil.announceTypeMatcher(type);
@@ -53,7 +54,8 @@ public class AnnounceController {
                 page,
                 size,
                 typeFilter,
-                search,
+                title,
+                city,
                 categoryId,
                 mustHiddenRecordBeDisplayed);
     }
@@ -98,7 +100,7 @@ public class AnnounceController {
 
     @GetMapping("/{uuid}/discussions")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getDiscussions(@PathVariable UUID uuid) {
+    public ResponseEntity<?> getAnnounceDiscussions(@PathVariable UUID uuid) {
         boolean withHiddenAnnounce = false;
         return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
     }

@@ -1,5 +1,7 @@
 package com.example.finder.model;
 
+import com.example.finder.dto.output.AdminDetailedDiscussionDTO;
+import com.example.finder.dto.output.AdminDiscussionDTO;
 import com.example.finder.dto.output.DetailedDiscussionDTO;
 import com.example.finder.dto.output.DiscussionDTO;
 
@@ -34,7 +36,7 @@ public class Discussion {
     @JoinColumn(name = "interactivity_state_id", nullable = false)
     private InteractivityState interactivityState;
 
-    @OneToMany(mappedBy = "discussion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "discussion", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     private List<Message> messages = new ArrayList<>();
 
     @CreationTimestamp
@@ -44,6 +46,9 @@ public class Discussion {
     @UpdateTimestamp
     @Column(name = "edited_at")
     private Timestamp editedAt;
+
+    @Column(name = "last_message_timestamp")
+    private Timestamp lastMessageTimestamp;
 
     public Discussion() {
     }
@@ -101,6 +106,14 @@ public class Discussion {
         this.editedAt = editedAt;
     }
 
+    public Timestamp getLastMessageTimestamp() {
+        return lastMessageTimestamp;
+    }
+
+    public void setLastMessageTimestamp(Timestamp lastMessageTimestamp) {
+        this.lastMessageTimestamp = lastMessageTimestamp;
+    }
+
     public List<Message> getMessages() {
         return messages;
     }
@@ -108,11 +121,29 @@ public class Discussion {
     public void addMessage(Message message) {
         messages.add(message);
         message.setDiscussion(this);
+        // Update last message timestamp when a new message is added
+        if (message.getCreatedAt() != null) {
+            this.lastMessageTimestamp = message.getCreatedAt();
+        }
     }
 
     public void removeMessage(Message message) {
         messages.remove(message);
         message.setDiscussion(null);
+    }
+
+    public Timestamp getLastMessageTimestampComputed() {
+        if (messages.isEmpty()) {
+            return null;
+        }
+        Message lastMessage = messages.stream()
+                .max((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
+                .orElse(null);
+        return lastMessage != null ? lastMessage.getCreatedAt() : null;
+    }
+
+    public boolean hasReportedMessage() {
+        return messages.stream().anyMatch(Message::isReported);
     }
 
     public DetailedDiscussionDTO toDetailedDiscussionDTO() {
@@ -121,6 +152,14 @@ public class Discussion {
 
     public DiscussionDTO toDiscussionDTO() {
         return new DiscussionDTO(this);
+    }
+
+    public AdminDiscussionDTO toAdminDiscussionDTO() {
+        return new AdminDiscussionDTO(this);
+    }
+
+    public AdminDetailedDiscussionDTO toAdminDetailedDiscussionDTO() {
+        return new AdminDetailedDiscussionDTO(this);
     }
 
     public String getExcerpt() {
