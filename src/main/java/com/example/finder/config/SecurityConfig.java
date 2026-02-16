@@ -75,6 +75,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers("/api/categories").permitAll()
                         .requestMatchers("/api/announces/found/paginated").permitAll()
+                        .requestMatchers("/api/announces/my-announces").authenticated()
                         .requestMatchers("/api/announces/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())

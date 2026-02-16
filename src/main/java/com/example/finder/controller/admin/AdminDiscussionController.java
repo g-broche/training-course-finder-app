@@ -60,7 +60,7 @@ public class AdminDiscussionController {
         return discussionService.getRelatedAnnounce(uuid, withHiddenData);
     }
 
-    @PutMapping("/{uuid}/interactivity")
+    @PatchMapping("/{uuid}/interactivity")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateInteractivity(
             @PathVariable UUID uuid,

@@ -72,25 +72,25 @@ public class AdminUserController {
         return userService.getUserDiscussionsForModeration(username, page, size, reportedOnly);
     }
 
-    @PutMapping("/{id}/ban")
+    @PatchMapping("/{id}/ban")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> banUser(@PathVariable UUID id) {
         return userService.banUser(id);
     }
 
-    @PutMapping("/{id}/unban")
+    @PatchMapping("/{id}/unban")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> unbanUser(@PathVariable UUID id) {
         return userService.unbanUser(id);
     }
 
-    @PutMapping("/{id}/promote-admin")
+    @PatchMapping("/{id}/promote-admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> promoteAdmin(@PathVariable UUID id) {
         return userService.promoteAdmin(id);
     }
 
-    @PutMapping("/{id}/revoke-admin")
+    @PatchMapping("/{id}/revoke-admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> revokeAdmin(@PathVariable UUID id) {
         return userService.revokeAdmin(id);
