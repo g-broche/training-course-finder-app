@@ -72,7 +72,7 @@ public class AdminAnnounceController {
         return discussionService.getAnnounceDiscussions(uuid, withHiddenAnnounce);
     }
 
-    @PutMapping("/{uuid}/type")
+    @PatchMapping("/{uuid}/type")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateType(
             @PathVariable UUID uuid,
@@ -85,7 +85,7 @@ public class AdminAnnounceController {
         return announceService.forceChangeAnnounceType(uuid, announceType);
     }
 
-    @PutMapping("/{uuid}/status")
+    @PatchMapping("/{uuid}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateStatus(
             @PathVariable UUID uuid,
@@ -98,7 +98,7 @@ public class AdminAnnounceController {
         return announceService.forceChangeAnnounceStatus(uuid, announceStatus);
     }
 
-    @PutMapping("/{uuid}/interactivity")
+    @PatchMapping("/{uuid}/interactivity")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateInteractivity(
             @PathVariable UUID uuid,
@@ -112,7 +112,7 @@ public class AdminAnnounceController {
         return announceService.forceChangeInteractivityState(uuid, interactivityState);
     }
 
-    @PutMapping("/{uuid}/recordstatus")
+    @PatchMapping("/{uuid}/recordstatus")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateRecordStatus(
             @PathVariable UUID uuid,

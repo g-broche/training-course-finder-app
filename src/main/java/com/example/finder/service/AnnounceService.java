@@ -2,11 +2,7 @@ package com.example.finder.service;
 
 import com.example.finder.config.PaginationConfig;
 import com.example.finder.dto.input.RequestAnnounce;
-import com.example.finder.dto.input.RequestAnnounceStatus;
-import com.example.finder.dto.input.RequestAnnounceType;
-import com.example.finder.dto.input.RequestInteractivityState;
 import com.example.finder.dto.output.AnnounceDto;
-import com.example.finder.dto.output.DetailedUserDto;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.exception.action.InvalidRequestException;
 import com.example.finder.exception.entity.CategoryNotFoundException;
@@ -19,14 +15,11 @@ import com.example.finder.model.enums.AvailableInteractivityState;
 import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
-import com.example.finder.repository.specification.DiscussionSpecifications;
 import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.response.PaginatedResponse;
 import com.example.finder.response.enums.AnnounceError;
-import com.example.finder.response.enums.AuthError;
 import com.example.finder.utils.ImageUtil;
 import com.example.finder.utils.SanitizerUtil;
-import com.example.finder.utils.StringUtil;
 import com.example.finder.utils.logger.Printer;
 import com.example.finder.utils.validator.ValidatorAnnounce;
 import com.example.finder.utils.validator.ValidatorAuth;
@@ -37,17 +30,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 @Service
@@ -56,6 +45,7 @@ public class AnnounceService {
     private final AnnounceTypeRepository announceTypeRepository;
     private final AnnounceStatusRepository announceStatusRepository;
     private final CategoryRepository categoryRepository;
+    private final DiscussionRepository discussionRepository;
     private final InteractivityStateRepository interactivityStateRepository;
     private final RecordStatusRepository recordStatusRepository;
     private final SanitizerUtil sanitizerUtil;
@@ -69,6 +59,7 @@ public class AnnounceService {
             AnnounceRepository announceRepository,
             AnnounceTypeRepository announceTypeRepository,
             AnnounceStatusRepository announceStatusRepository,
+            DiscussionRepository discussionRepository,
             CategoryRepository categoryRepository,
             InteractivityStateRepository interactivityStateRepository,
             RecordStatusRepository recordStatusRepository,
@@ -81,6 +72,7 @@ public class AnnounceService {
         this.announceRepository = announceRepository;
         this.announceTypeRepository = announceTypeRepository;
         this.announceStatusRepository = announceStatusRepository;
+        this.discussionRepository = discussionRepository;
         this.categoryRepository = categoryRepository;
         this.interactivityStateRepository = interactivityStateRepository;
         this.recordStatusRepository = recordStatusRepository;
@@ -414,10 +406,56 @@ public class AnnounceService {
         }
     }
 
-    public ResponseEntity<?> forceChangeAnnounceType(UUID uuid, AvailableAnnounceTypes announceType) {
+    public ResponseEntity<?> userUpdateAnnounceInteractivity(UUID uuid,
+            AvailableInteractivityState interactivityState) {
         try {
             AppUser requester = validatorAuth.getUserFromSecurityContext();
-            if (!requester.isAdmin()) {
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            if (!announce.getAuthor().getId().equals(requester.getId())) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            return handleUpdateInteractivityState(announce, interactivityState);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    public ResponseEntity<?> userUpdateAnnounceStatus(UUID uuid, AvailableAnnounceStatus announceStatus) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            if (!announce.getAuthor().getId().equals(requester.getId())) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            return handleUpdateAnnounceStatus(announce, announceStatus);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    public ResponseEntity<?> forceChangeAnnounceType(UUID uuid, AvailableAnnounceTypes announceType) {
+        try {
+            if (!validatorAuth.isCurrentUserAdmin()) {
                 return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
             }
             Specification<Announce> spec = Specification.allOf(
@@ -428,6 +466,117 @@ public class AnnounceService {
                 return ApiResponseFactory
                         .notFound("There is no announce with id: " + uuid);
             }
+            return handleUpdateAnnounceType(announce, announceType);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    public ResponseEntity<?> forceChangeAnnounceStatus(UUID uuid, AvailableAnnounceStatus announceStatus) {
+        try {
+            if (!validatorAuth.isCurrentUserAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            return handleUpdateAnnounceStatus(announce, announceStatus);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    public ResponseEntity<?> forceChangeInteractivityState(UUID uuid, AvailableInteractivityState interactivityState) {
+        try {
+            if (!validatorAuth.isCurrentUserAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            return handleUpdateInteractivityState(announce, interactivityState);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    };
+
+    public ResponseEntity<?> forceChangeRecordStatus(UUID uuid, AvailableRecordStatus recordStatus) {
+        try {
+            if (!validatorAuth.isCurrentUserAdmin()) {
+                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
+            }
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasId(uuid));
+
+            Announce announce = announceRepository.findOne(spec).orElse(null);
+            if (announce == null) {
+                return ApiResponseFactory
+                        .notFound("There is no announce with id: " + uuid);
+            }
+            return handleUpdateRecordStatus(announce, recordStatus);
+        } catch (InvalidRequestException e) {
+            return ApiResponseFactory.badRequest(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
+    /**
+     * get page of the user's announces depending on given arguments and returns the
+     * data in a
+     * ApiResponse
+     * 
+     * @param page page to get
+     * @param size amount of announces per page
+     * @return api response with data according the the given parameters
+     */
+    public ResponseEntity<?> getUserPaginatedAnnounces(
+            int page,
+            int size) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasAuthor(requester.getId()),
+                    AnnounceSpecifications.hasShownStatus());
+            Page<Announce> announcePage = announceRepository.findAll(spec, pageable);
+            Page<AnnounceDto> announceDtoPage = announcePage.map((it) -> {
+                return new AnnounceDto(
+                        it,
+                        imageUtil.getBaseWebPathForPhotos());
+            });
+            var paginatedResult = PaginatedResponse.from(announceDtoPage);
+            return ApiResponseFactory.success(paginatedResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
+    private ResponseEntity<?> handleUpdateAnnounceType(Announce announce, AvailableAnnounceTypes announceType) {
+        try {
             AnnounceType newAnnounceType = announceTypeRepository
                     .findByName(announceType.getDisplayName())
                     .orElseThrow(() -> new InvalidRequestException(
@@ -443,20 +592,8 @@ public class AnnounceService {
         }
     };
 
-    public ResponseEntity<?> forceChangeAnnounceStatus(UUID uuid, AvailableAnnounceStatus announceStatus) {
+    private ResponseEntity<?> handleUpdateAnnounceStatus(Announce announce, AvailableAnnounceStatus announceStatus) {
         try {
-            AppUser requester = validatorAuth.getUserFromSecurityContext();
-            if (!requester.isAdmin()) {
-                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
-            }
-            Specification<Announce> spec = Specification.allOf(
-                    AnnounceSpecifications.hasId(uuid));
-
-            Announce announce = announceRepository.findOne(spec).orElse(null);
-            if (announce == null) {
-                return ApiResponseFactory
-                        .notFound("There is no announce with id: " + uuid);
-            }
             AnnounceStatus newAnnounceStatus = announceStatusRepository
                     .findByName(announceStatus.getDisplayName())
                     .orElseThrow(() -> new InvalidRequestException(
@@ -472,25 +609,21 @@ public class AnnounceService {
         }
     };
 
-    public ResponseEntity<?> forceChangeInteractivityState(UUID uuid, AvailableInteractivityState interactivityState) {
+    private ResponseEntity<?> handleUpdateInteractivityState(Announce announce,
+            AvailableInteractivityState interactivityState) {
         try {
-            AppUser requester = validatorAuth.getUserFromSecurityContext();
-            if (!requester.isAdmin()) {
-                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
-            }
-            Specification<Announce> spec = Specification.allOf(
-                    AnnounceSpecifications.hasId(uuid));
-
-            Announce announce = announceRepository.findOne(spec).orElse(null);
-            if (announce == null) {
-                return ApiResponseFactory
-                        .notFound("There is no announce with id: " + uuid);
-            }
             InteractivityState newInteractivityState = interactivityStateRepository
                     .findByName(interactivityState.getDisplayName())
                     .orElseThrow(() -> new InvalidRequestException(
                             "The provided interactivity state is invalid"));
             announce.setInteractivityState(newInteractivityState);
+            if (interactivityState == AvailableInteractivityState.CLOSE) {
+                announce.getDiscussions().forEach(discussion -> {
+                    discussion.setInteractivityState(newInteractivityState);
+                    discussionRepository.save(discussion);
+                });
+            }
+
             announceRepository.save(announce);
             return ApiResponseFactory.success(new AnnounceDto(announce, imageUtil.getBaseWebPathForPhotos()));
         } catch (InvalidRequestException e) {
@@ -501,20 +634,8 @@ public class AnnounceService {
         }
     };
 
-    public ResponseEntity<?> forceChangeRecordStatus(UUID uuid, AvailableRecordStatus recordStatus) {
+    private ResponseEntity<?> handleUpdateRecordStatus(Announce announce, AvailableRecordStatus recordStatus) {
         try {
-            AppUser requester = validatorAuth.getUserFromSecurityContext();
-            if (!requester.isAdmin()) {
-                return ApiResponseFactory.unauthorized("You are not authorized to perform this action");
-            }
-            Specification<Announce> spec = Specification.allOf(
-                    AnnounceSpecifications.hasId(uuid));
-
-            Announce announce = announceRepository.findOne(spec).orElse(null);
-            if (announce == null) {
-                return ApiResponseFactory
-                        .notFound("There is no announce with id: " + uuid);
-            }
             RecordStatus newRecordStatus = recordStatusRepository
                     .findByName(recordStatus.getDisplayName())
                     .orElseThrow(() -> new InvalidRequestException(
@@ -528,5 +649,5 @@ public class AnnounceService {
             e.printStackTrace();
             return ApiResponseFactory.internalError();
         }
-    };
+    }
 }

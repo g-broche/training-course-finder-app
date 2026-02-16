@@ -1,9 +1,14 @@
 package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestAnnounce;
+import com.example.finder.dto.input.RequestAnnounceStatus;
 import com.example.finder.dto.input.RequestDiscussion;
+import com.example.finder.dto.input.RequestInteractivityState;
 import com.example.finder.model.AnnounceType;
+import com.example.finder.model.enums.AvailableAnnounceStatus;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
+import com.example.finder.model.enums.AvailableInteractivityState;
+import com.example.finder.response.ApiResponseFactory;
 import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.EnumUtil;
@@ -40,11 +45,38 @@ public class AnnounceController {
         return announceService.getAnnounceDetail(uuid, mustHiddenRecordBeDisplayed);
     }
 
+    @PatchMapping("/{uuid}/update/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateAnnounceStatus(
+            @PathVariable UUID uuid,
+            @RequestBody RequestAnnounceStatus request) {
+        AvailableAnnounceStatus announceStatus = enumUtil.announceStatusMatcher(request.getAnnounceStatus());
+        if (announceStatus == null) {
+            return ApiResponseFactory
+                    .badRequest("Invalid announceStatus parameter. Must be 'unsolved' or 'solved'.");
+        }
+        return announceService.userUpdateAnnounceStatus(uuid, announceStatus);
+    }
+
+    @PatchMapping("/{uuid}/update/interactivity")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateAnnounceInteractivity(
+            @PathVariable UUID uuid,
+            @RequestBody RequestInteractivityState request) {
+        AvailableInteractivityState interactivityState = enumUtil
+                .interactivityStateMatcher(request.getInteractivityState());
+        if (interactivityState == null) {
+            return ApiResponseFactory
+                    .badRequest("Invalid interactivityState parameter. Must be 'open' or 'close'.");
+        }
+        return announceService.userUpdateAnnounceInteractivity(uuid, interactivityState);
+    }
+
     @GetMapping("/paginated")
     public ResponseEntity<?> getPaginatedAnnounces(
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) Long categoryId) {
@@ -60,7 +92,18 @@ public class AnnounceController {
                 mustHiddenRecordBeDisplayed);
     }
 
+    @GetMapping("/my-announces")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getConnectedUserAnnounces(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return announceService.getUserPaginatedAnnounces(
+                page,
+                size);
+    }
+
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createNewFoundAnnounce(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
@@ -91,6 +134,7 @@ public class AnnounceController {
     }
 
     @PostMapping(value = "/lost/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createNewLostAnnounce(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
