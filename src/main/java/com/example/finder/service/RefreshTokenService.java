@@ -2,8 +2,6 @@ package com.example.finder.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,8 +46,7 @@ public class RefreshTokenService {
     }
 
     /**
-     * Delete all revoked tokens for a user except for the latest two.
-     * This helps maintain a limited history of revoked tokens.
+     * Delete all revoked tokens for a user except for a defined amount.
      * 
      * @param user The user whose old revoked tokens should be cleaned up
      */
@@ -60,8 +57,6 @@ public class RefreshTokenService {
         Sort sort = Sort.by("createdAt").descending();
         List<RefreshToken> revokedTokens = refreshTokenRepository.findAll(spec, sort);
 
-        // Keep only the latest revokedTokenRetentionLimit revoked tokens, delete the
-        // rest
         if (revokedTokens.size() > revokedTokenRetentionLimit) {
             List<RefreshToken> tokensToDelete = revokedTokens.subList(revokedTokenRetentionLimit, revokedTokens.size());
             refreshTokenRepository.deleteAll(tokensToDelete);
