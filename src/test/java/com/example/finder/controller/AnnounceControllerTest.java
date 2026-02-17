@@ -110,7 +110,7 @@ class AnnounceControllerTest extends UserRelatedTest {
                                 "johndoe",
                                 "john@test.test",
                                 "1Password!");
-                userToken = jwtUtil.generateToken(testUser);
+                userToken = jwtUtil.generateAccessToken(testUser);
 
                 secondUser = createTestUser(
                                 "Jane",
@@ -448,7 +448,7 @@ class AnnounceControllerTest extends UserRelatedTest {
                                 .andExpect(jsonPath("$.data.length()").value(2));
 
                 // secondUser should only see their own discussion
-                String anotherToken = jwtUtil.generateToken(secondUser);
+                String anotherToken = jwtUtil.generateAccessToken(secondUser);
                 mockMvc.perform(get("/api/announces/" + announce.getId() + "/discussions")
                                 .header("Authorization", "Bearer " + anotherToken))
                                 .andExpect(status().isOk())

@@ -1,6 +1,7 @@
 package com.example.finder.service;
 
 import com.example.finder.dto.input.RequestLogin;
+import com.example.finder.dto.input.RequestRefreshToken;
 import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.dto.JwtDto;
@@ -10,10 +11,12 @@ import com.example.finder.exception.action.ActivationTokenGenerationException;
 import com.example.finder.exception.action.UserNotCreatedException;
 import com.example.finder.model.AppUser;
 import com.example.finder.model.RecordStatus;
+import com.example.finder.model.RefreshToken;
 import com.example.finder.model.Role;
 import com.example.finder.model.UserStatus;
 import com.example.finder.repository.AppUserRepository;
 import com.example.finder.repository.RecordStatusRepository;
+import com.example.finder.repository.RefreshTokenRepository;
 import com.example.finder.repository.RoleRepository;
 import com.example.finder.repository.UserStatusRepository;
 import com.example.finder.response.ApiResponseFactory;
@@ -54,6 +57,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authManager;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final CookieUtil cookieUtil;
 
     public AuthService(
@@ -66,6 +71,8 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             AuthenticationManager authManager,
             JwtUtil jwtUtil,
+            RefreshTokenService refreshTokenService,
+            RefreshTokenRepository refreshTokenRepository,
             CookieUtil cookieUtil,
             ValidatorAuth validatorAuth) {
         this.sanitizerUtil = sanitizerUtil;
@@ -77,6 +84,8 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.authManager = authManager;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.cookieUtil = cookieUtil;
         this.validatorAuth = validatorAuth;
     }
@@ -107,8 +116,9 @@ public class AuthService {
             // create new user, create a token with the user safe data and return it in the
             // response
             AppUser createdUser = createNewUserFromData(registerData);
-            String token = jwtUtil.generateToken(createdUser);
-            return ApiResponseFactory.success(new JwtDto(token));
+            String accessToken = jwtUtil.generateAccessToken(createdUser);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(createdUser);
+            return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
@@ -132,8 +142,9 @@ public class AuthService {
 
             // get user data from user details en return a token containing safe data
             AppUser user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
-            String token = jwtUtil.generateToken(user);
-            return ApiResponseFactory.success(new JwtDto(token));
+            String accessToken = jwtUtil.generateAccessToken(user);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+            return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));
         } catch (AuthenticationException e) {
             return ApiResponseFactory.unauthorized(AuthError.INVALID_CREDENTIALS.getErrorMessage());
         } catch (Exception e) {
@@ -251,9 +262,11 @@ public class AuthService {
                         AuthError.INVALID_CREDENTIALS.getErrorMessage());
             }
 
-            return ApiResponseFactory.success(
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+            return ApiResponseFactory.successWithCookies(
                     "Login successful",
-                    cookieUtil.generateCookieFromUser(user));
+                    cookieUtil.generateAccessTokenCookie(user),
+                    cookieUtil.generateRefreshTokenCookie(refreshToken));
         } catch (AuthenticationException e) {
             return ApiResponseFactory.unauthorized(AuthError.INVALID_CREDENTIALS.getErrorMessage());
         } catch (Exception e) {
@@ -267,10 +280,25 @@ public class AuthService {
      * 
      * @return Response entity with expired cookie header
      */
-    public ResponseEntity<?> logout() {
-        return ApiResponseFactory.success(
-                "Logged out successfully",
-                cookieUtil.generateExpiredCookie());
+    public ResponseEntity<?> logoutAdmin(String refreshTokenString) {
+        try {
+            if (refreshTokenString != null && !refreshTokenString.isEmpty()) {
+                refreshTokenService.revokeTokenByString(refreshTokenString);
+                AppUser user = refreshTokenRepository.findByToken(refreshTokenString)
+                        .orElseThrow(() -> new RuntimeException("Refresh token not found"))
+                        .getUser();
+                refreshTokenService.deleteOldRevokedTokens(user);
+            }
+
+            return ApiResponseFactory.successWithCookies(
+                    "Logged out successfully",
+                    cookieUtil.generateExpiredAccessTokenCookie(),
+                    cookieUtil.generateExpiredRefreshTokenCookie());
+
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.internalError();
+        }
     }
 
     /**
@@ -294,4 +322,77 @@ public class AuthService {
         }
     }
 
+    /**
+     * Refresh access token using refresh token for React Native app
+     * 
+     * @param refreshTokenString The refresh token from request body
+     * @return Response entity with new access token and refresh token
+     */
+    @Transactional
+    public ResponseEntity<?> refreshToken(String refreshTokenString) {
+        try {
+            RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
+                    .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+            refreshTokenService.verifyExpiration(refreshToken);
+            refreshTokenService.verifyNotRevoked(refreshToken);
+            AppUser user = refreshToken.getUser();
+            refreshToken.setIsRevoked(true);
+            refreshTokenRepository.save(refreshToken);
+            refreshTokenService.deleteOldRevokedTokens(user);
+            String newAccessToken = jwtUtil.generateAccessToken(user);
+            RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+            return ApiResponseFactory.success(new JwtDto(newAccessToken, newRefreshToken.getToken()));
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.unauthorized("Invalid refresh token");
+        }
+    }
+
+    /**
+     * Refresh access token using refresh token cookie for Admin back office
+     * 
+     * @param refreshTokenString The refresh token from cookie
+     * @return Response entity with new access token and refresh token as cookies
+     */
+    @Transactional
+    public ResponseEntity<?> refreshAdminToken(String refreshTokenString) {
+        try {
+            RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
+                    .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+            refreshTokenService.verifyExpiration(refreshToken);
+            refreshTokenService.verifyNotRevoked(refreshToken);
+            AppUser user = refreshToken.getUser();
+
+            if (!user.isAdmin()) {
+                return ApiResponseFactory.unauthorized("Access denied");
+            }
+            refreshToken.setIsRevoked(true);
+            refreshTokenRepository.save(refreshToken);
+            refreshTokenService.deleteOldRevokedTokens(user);
+            RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+            return ApiResponseFactory.successWithCookies(
+                    "Token refreshed successfully",
+                    cookieUtil.generateAccessTokenCookie(user),
+                    cookieUtil.generateRefreshTokenCookie(newRefreshToken));
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.unauthorized("Invalid refresh token");
+        }
+    }
+
+    public ResponseEntity<?> logout(RequestRefreshToken request) {
+        try {
+            refreshTokenService.revokeTokenByString(request.getRefreshToken());
+            AppUser user = refreshTokenRepository.findByToken(request.getRefreshToken())
+                    .orElseThrow(() -> new RuntimeException("Refresh token not found"))
+                    .getUser();
+            refreshTokenService.deleteOldRevokedTokens(user);
+            return ApiResponseFactory.success("Logged out successfully");
+        } catch (Exception e) {
+            Printer.printErrorLogWithDetails(e);
+            return ApiResponseFactory.internalError();
+        }
+    }
 }

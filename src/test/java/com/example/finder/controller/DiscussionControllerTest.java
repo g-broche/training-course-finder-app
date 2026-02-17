@@ -86,7 +86,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "alice",
                                 "alice@test.test",
                                 "1Password!");
-                authorToken = jwtUtil.generateToken(announceAuthor);
+                authorToken = jwtUtil.generateAccessToken(announceAuthor);
 
                 discussionInitiator = createTestUser(
                                 "Bob",
@@ -94,7 +94,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "bob",
                                 "bob@test.test",
                                 "1Password!");
-                initiatorToken = jwtUtil.generateToken(discussionInitiator);
+                initiatorToken = jwtUtil.generateAccessToken(discussionInitiator);
 
                 otherUser = createTestUser(
                                 "Charlie",
@@ -102,7 +102,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "charlie",
                                 "charlie@test.test",
                                 "1Password!");
-                otherUserToken = jwtUtil.generateToken(otherUser);
+                otherUserToken = jwtUtil.generateAccessToken(otherUser);
 
                 // Create test category
                 testCategory = new Category("Electronics");

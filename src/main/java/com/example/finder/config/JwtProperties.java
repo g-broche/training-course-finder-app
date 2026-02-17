@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.jwt")
 public class JwtProperties {
     private String secret;
-    private long expirationMs;
+    private long accessTokenExpirationMs = 10 * 60 * 1000; // Default to 10 minutes
 
     // Getters and setters
     public String getSecret() {
@@ -21,12 +21,11 @@ public class JwtProperties {
         this.secret = secret;
     }
 
-    public long getExpirationMs() {
-        return expirationMs;
+    public long getAccessTokenExpirationMs() {
+        return accessTokenExpirationMs;
     }
 
-    public void setExpirationMs(long expirationMs) {
-        this.expirationMs = expirationMs;
+    public void setAccessTokenExpirationMs(long accessTokenExpirationMs) {
+        this.accessTokenExpirationMs = accessTokenExpirationMs;
     }
 }
-

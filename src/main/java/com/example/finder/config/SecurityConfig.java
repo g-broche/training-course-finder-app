@@ -2,6 +2,9 @@ package com.example.finder.config;
 
 import com.example.finder.service.CustomUserDetailsService;
 import com.example.finder.utils.jwt.JwtFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -82,11 +85,17 @@ public class SecurityConfig {
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                        }))
                 .build();
     }
 
     /**
-     *
      * @param userDetailsService
      * @return
      */

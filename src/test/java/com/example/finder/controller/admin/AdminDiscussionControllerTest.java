@@ -101,8 +101,8 @@ class AdminDiscussionControllerTest extends UserRelatedTest {
                 "another@disctest.test",
                 "AnotherPassword123!");
 
-        adminToken = jwtUtil.generateToken(adminUser);
-        userToken = jwtUtil.generateToken(regularUser);
+        adminToken = jwtUtil.generateAccessToken(adminUser);
+        userToken = jwtUtil.generateAccessToken(regularUser);
 
         testCategory = new Category("Electronics");
         testCategory = categoryRepository.save(testCategory);

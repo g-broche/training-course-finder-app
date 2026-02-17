@@ -1,20 +1,30 @@
 package com.example.finder.dto;
 
 public class JwtDto {
-    private String jwt;
+    private String accessToken;
+    private String refreshToken;
 
-    public JwtDto(){
+    public JwtDto() {
     }
 
-    public JwtDto(String token){
-        this.jwt = token;
+    public JwtDto(String accessToken, String refreshToken) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
     }
 
-    public String getJwt() {
-        return jwt;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public void setJwt(String jwt) {
-        this.jwt = jwt;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

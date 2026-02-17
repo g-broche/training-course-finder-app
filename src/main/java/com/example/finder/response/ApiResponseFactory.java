@@ -54,6 +54,21 @@ public class ApiResponseFactory {
                 .body(new ApiResponse<>(true, message, data));
     }
 
+    /**
+     * Success response with multiple cookies
+     * 
+     * @param message Response message
+     * @param cookies Array of ResponseCookie to include in Set-Cookie headers
+     * @return ResponseEntity with multiple cookie headers
+     */
+    public static ResponseEntity<ApiResponse<Void>> successWithCookies(String message, ResponseCookie... cookies) {
+        var responseBuilder = ResponseEntity.ok();
+        for (ResponseCookie cookie : cookies) {
+            responseBuilder.header("Set-Cookie", cookie.toString());
+        }
+        return responseBuilder.body(new ApiResponse<>(true, message, null));
+    }
+
     public static <T> ResponseEntity<ApiResponse<T>> error(String message, T data, HttpStatus status) {
         return ResponseEntity.status(status).body(new ApiResponse<>(false, message, null));
     }

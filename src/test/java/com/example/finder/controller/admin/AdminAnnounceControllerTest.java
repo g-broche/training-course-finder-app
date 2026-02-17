@@ -89,8 +89,8 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
                 "regular@test.test",
                 "UserPassword123!");
 
-        adminToken = jwtUtil.generateToken(adminUser);
-        userToken = jwtUtil.generateToken(regularUser);
+        adminToken = jwtUtil.generateAccessToken(adminUser);
+        userToken = jwtUtil.generateAccessToken(regularUser);
 
         // Create test category
         testCategory = new Category("Electronics");
