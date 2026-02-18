@@ -275,7 +275,7 @@ class AnnounceControllerTest extends UserRelatedTest {
         }
 
         @Test
-        void createNewFoundAnnounce_WithoutAuth_Forbidden() throws Exception {
+        void createNewFoundAnnounce_WithoutAuth_Unauthorized() throws Exception {
                 MockMultipartFile image = new MockMultipartFile(
                                 "image",
                                 "test-image.jpg",
@@ -294,7 +294,7 @@ class AnnounceControllerTest extends UserRelatedTest {
                                 .param("country", "France")
                                 .param("relevantDate", LocalDate.now().toString())
                                 .param("categoryId", testCategory.getId().toString()))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -374,11 +374,11 @@ class AnnounceControllerTest extends UserRelatedTest {
         }
 
         @Test
-        void getDiscussions_WithoutAuth_Forbidden() throws Exception {
+        void getDiscussions_WithoutAuth_Unauthorized() throws Exception {
                 Announce announce = testAnnounces.get(0);
 
                 mockMvc.perform(get("/api/announces/" + announce.getId() + "/discussions"))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test

@@ -212,7 +212,7 @@ class DiscussionControllerTest extends UserRelatedTest {
         @Test
         void getDiscussion_WithoutAuth_Unauthorized() throws Exception {
                 mockMvc.perform(get("/api/discussions/" + testDiscussion.getId()))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -351,7 +351,7 @@ class DiscussionControllerTest extends UserRelatedTest {
         }
 
         @Test
-        void reportDiscussionMessage_WithoutAuth_Forbidden() throws Exception {
+        void reportDiscussionMessage_WithoutAuth_Unauthorized() throws Exception {
                 // Create a new discussion with a message
                 InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
                 RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
@@ -373,7 +373,7 @@ class DiscussionControllerTest extends UserRelatedTest {
 
                 mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
                                 + "/messages/" + messageToReport.getId() + "/report"))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test

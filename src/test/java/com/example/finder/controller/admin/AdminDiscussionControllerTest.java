@@ -196,11 +196,11 @@ class AdminDiscussionControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetDiscussionDetail_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetDiscussionDetail_WithoutToken_Unauthorized() throws Exception {
         UUID discussionId = testDiscussions.get(0).getId();
 
         mockMvc.perform(get("/api/admin/discussions/{uuid}", discussionId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -259,11 +259,11 @@ class AdminDiscussionControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetPaginatedDiscussions_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetPaginatedDiscussions_WithoutToken_Unauthorized() throws Exception {
         mockMvc.perform(get("/api/admin/discussions/paginated")
                 .param("page", "0")
                 .param("size", "50"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -298,11 +298,11 @@ class AdminDiscussionControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetRelatedAnnounce_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetRelatedAnnounce_WithoutToken_Unauthorized() throws Exception {
         UUID discussionId = testDiscussions.get(0).getId();
 
         mockMvc.perform(get("/api/admin/discussions/{uuid}/related-announce", discussionId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

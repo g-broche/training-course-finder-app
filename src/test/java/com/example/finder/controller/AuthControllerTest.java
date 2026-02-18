@@ -85,7 +85,7 @@ class AuthControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerData)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.jwt").exists())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
                                 .andReturn();
 
                 AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();
@@ -125,7 +125,7 @@ class AuthControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(credentials)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.jwt").exists())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
                                 .andReturn();
 
                 String responseBody = result.getResponse().getContentAsString();
