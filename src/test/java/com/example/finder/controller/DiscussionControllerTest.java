@@ -86,7 +86,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "alice",
                                 "alice@test.test",
                                 "1Password!");
-                authorToken = jwtUtil.generateToken(announceAuthor);
+                authorToken = jwtUtil.generateAccessToken(announceAuthor);
 
                 discussionInitiator = createTestUser(
                                 "Bob",
@@ -94,7 +94,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "bob",
                                 "bob@test.test",
                                 "1Password!");
-                initiatorToken = jwtUtil.generateToken(discussionInitiator);
+                initiatorToken = jwtUtil.generateAccessToken(discussionInitiator);
 
                 otherUser = createTestUser(
                                 "Charlie",
@@ -102,7 +102,7 @@ class DiscussionControllerTest extends UserRelatedTest {
                                 "charlie",
                                 "charlie@test.test",
                                 "1Password!");
-                otherUserToken = jwtUtil.generateToken(otherUser);
+                otherUserToken = jwtUtil.generateAccessToken(otherUser);
 
                 // Create test category
                 testCategory = new Category("Electronics");
@@ -212,7 +212,7 @@ class DiscussionControllerTest extends UserRelatedTest {
         @Test
         void getDiscussion_WithoutAuth_Unauthorized() throws Exception {
                 mockMvc.perform(get("/api/discussions/" + testDiscussion.getId()))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -351,7 +351,7 @@ class DiscussionControllerTest extends UserRelatedTest {
         }
 
         @Test
-        void reportDiscussionMessage_WithoutAuth_Forbidden() throws Exception {
+        void reportDiscussionMessage_WithoutAuth_Unauthorized() throws Exception {
                 // Create a new discussion with a message
                 InteractivityState openState = interactivityStateRepository.getOpenInteractivityStateOrThrow();
                 RecordStatus shownStatus = recordStatusRepository.getShownRecordStatusOrThrow();
@@ -373,7 +373,7 @@ class DiscussionControllerTest extends UserRelatedTest {
 
                 mockMvc.perform(post("/api/discussions/" + reportTestDiscussion.getId()
                                 + "/messages/" + messageToReport.getId() + "/report"))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test

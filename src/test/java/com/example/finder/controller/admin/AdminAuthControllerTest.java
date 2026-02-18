@@ -104,7 +104,7 @@ class AdminAuthControllerTest extends UserRelatedTest {
 
                 String setCookieHeader = result.getResponse().getHeader("Set-Cookie");
                 assertNotNull(setCookieHeader, "Set-Cookie header should be present");
-                assertTrue(setCookieHeader.contains("jwt="), "Cookie should contain jwt");
+                assertTrue(setCookieHeader.contains("accessToken="), "Cookie should contain jwt");
                 assertTrue(setCookieHeader.contains("HttpOnly"), "Cookie should be HttpOnly");
                 assertTrue(setCookieHeader.contains("Path=/"), "Cookie should have correct path");
                 assertTrue(setCookieHeader.contains("Max-Age="), "Cookie should have expiration");
@@ -127,9 +127,9 @@ class AdminAuthControllerTest extends UserRelatedTest {
                 String setCookieHeader = result.getResponse().getHeader("Set-Cookie");
 
                 // Extract JWT from Set-Cookie header
-                String jwtToken = extractJwtFromCookie(setCookieHeader);
-                assertNotNull(jwtToken, "JWT token should be extractable from cookie");
-                assertEquals(3, jwtToken.split("\\.").length, "JWT should have 3 parts");
+                String accessToken = extractJwtFromCookie(setCookieHeader);
+                assertNotNull(accessToken, "JWT token should be extractable from cookie");
+                assertEquals(3, accessToken.split("\\.").length, "JWT should have 3 parts");
 
                 // Decode and validate JWT claims
                 String secret = jwtProperties.getSecret();
@@ -138,7 +138,7 @@ class AdminAuthControllerTest extends UserRelatedTest {
                 Jws<Claims> jwsClaims = Jwts.parserBuilder()
                                 .setSigningKey(Keys.hmacShaKeyFor(keyBytes))
                                 .build()
-                                .parseClaimsJws(jwtToken);
+                                .parseClaimsJws(accessToken);
 
                 Claims claims = jwsClaims.getBody();
 
@@ -206,7 +206,7 @@ class AdminAuthControllerTest extends UserRelatedTest {
 
                 String setCookieHeader = result.getResponse().getHeader("Set-Cookie");
                 assertNotNull(setCookieHeader, "Set-Cookie header should be present");
-                assertTrue(setCookieHeader.contains("jwt="), "Cookie should contain jwt");
+                assertTrue(setCookieHeader.contains("accessToken="), "Cookie should contain jwt");
                 assertTrue(setCookieHeader.contains("Max-Age=0"), "Cookie should have Max-Age=0 for expiration");
         }
 
@@ -237,7 +237,7 @@ class AdminAuthControllerTest extends UserRelatedTest {
          * @return The JWT token string
          */
         private String extractJwtFromCookie(String setCookieHeader) {
-                Pattern pattern = Pattern.compile("jwt=([^;]+)");
+                Pattern pattern = Pattern.compile("accessToken=([^;]+)");
                 Matcher matcher = pattern.matcher(setCookieHeader);
                 if (matcher.find()) {
                         return matcher.group(1);

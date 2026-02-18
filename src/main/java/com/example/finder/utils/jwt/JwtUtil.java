@@ -2,6 +2,7 @@ package com.example.finder.utils.jwt;
 
 import com.example.finder.config.JwtProperties;
 import com.example.finder.model.AppUser;
+import com.example.finder.model.RefreshToken;
 import com.example.finder.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -10,6 +11,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -21,7 +24,7 @@ public class JwtUtil {
         this.jwtProperties = jwtProperties;
     }
 
-    public String generateToken(AppUser user) {
+    public String generateAccessToken(AppUser user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("roles", user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
@@ -33,7 +36,7 @@ public class JwtUtil {
                 .claim("hasAcceptedGdpr", user.getHasAcceptGdpr())
                 .claim("userCreatedAt", user.getCreatedAt().getTime())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessTokenExpirationMs()))
                 .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -70,6 +73,7 @@ public class JwtUtil {
                 .getExpiration();
         return expiration.before(new Date());
     }
+
     public Long extractUserId(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))

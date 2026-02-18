@@ -41,135 +41,131 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:h2:mem:authtest;DB_CLOSE_DELAY=-1"
+                "spring.datasource.url=jdbc:h2:mem:authtest;DB_CLOSE_DELAY=-1"
 })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @AutoConfigureMockMvc
 @SpringBootTest
 class AuthControllerTest {
-    @Autowired
-    private AppUserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private UserStatusRepository userStatusRepository;
-    @Autowired
-    private RecordStatusRepository recordStatusRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+        @Autowired
+        private AppUserRepository userRepository;
+        @Autowired
+        private RoleRepository roleRepository;
+        @Autowired
+        private UserStatusRepository userStatusRepository;
+        @Autowired
+        private RecordStatusRepository recordStatusRepository;
+        @Autowired
+        private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private JwtProperties jwtProperties;
+        @Autowired
+        private JwtProperties jwtProperties;
 
-    @Test
-    void testRegister_GivenValidData_CreatesNewUser() throws Exception {
-        RequestRegister registerData = new RequestRegister(
-                "John",
-                "Doe",
-                "JohnD",
-                "john.doe@test.test",
-                "TestPassword1!",
-                true
-        );
+        @Test
+        void testRegister_GivenValidData_CreatesNewUser() throws Exception {
+                RequestRegister registerData = new RequestRegister(
+                                "John",
+                                "Doe",
+                                "JohnD",
+                                "john.doe@test.test",
+                                "TestPassword1!",
+                                true);
 
-        MvcResult result = mockMvc.perform(post("/api/auth/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registerData)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.jwt").exists())
-                .andReturn();
+                MvcResult result = mockMvc.perform(post("/api/auth/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerData)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
+                                .andReturn();
 
-        AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();
+                AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();
 
-        assertEquals("John",createdUser.getFirstName() , "Created user name should match request");
-        assertEquals(1, createdUser.getRoles().size() , "Only one role should be attributed at register");
+                assertEquals("John", createdUser.getFirstName(), "Created user name should match request");
+                assertEquals(1, createdUser.getRoles().size(), "Only one role should be attributed at register");
 
-        String defaultRoleName = AvailableRoles.USER.getDisplayName();
-        String roleGivenToNewUser = createdUser.getRoles().iterator().next().getName();
+                String defaultRoleName = AvailableRoles.USER.getDisplayName();
+                String roleGivenToNewUser = createdUser.getRoles().iterator().next().getName();
 
-        assertEquals(defaultRoleName, roleGivenToNewUser, "attributed role should be default role");
-        assertTrue(
-                passwordEncoder.matches(registerData.getPassword(), createdUser.getPassword()),
-                "Hashed password should match clear password"
-        );
-    }
+                assertEquals(defaultRoleName, roleGivenToNewUser, "attributed role should be default role");
+                assertTrue(
+                                passwordEncoder.matches(registerData.getPassword(), createdUser.getPassword()),
+                                "Hashed password should match clear password");
+        }
 
-    @Test
-    void testLogin_GivenValidCredentials_ReturnsOkWithToken() throws Exception {
-        AppUser userToLog = new AppUser(
-                "John",
-                "Doe",
-                "JohnLogin",
-                "john.doe@testlogin.test",
-                passwordEncoder.encode("TestPassword1!")
-        );
-        Role userRole = roleRepository.getUserRoleOrThrow();
-        userToLog.setRoles(Set.of(userRole));
-        userToLog.setUserStatus(userStatusRepository.getAllowedUserStatusOrThrow());
-        userToLog.setRecordStatus(recordStatusRepository.getShownRecordStatusOrThrow());
+        @Test
+        void testLogin_GivenValidCredentials_ReturnsOkWithToken() throws Exception {
+                AppUser userToLog = new AppUser(
+                                "John",
+                                "Doe",
+                                "JohnLogin",
+                                "john.doe@testlogin.test",
+                                passwordEncoder.encode("TestPassword1!"));
+                Role userRole = roleRepository.getUserRoleOrThrow();
+                userToLog.setRoles(Set.of(userRole));
+                userToLog.setUserStatus(userStatusRepository.getAllowedUserStatusOrThrow());
+                userToLog.setRecordStatus(recordStatusRepository.getShownRecordStatusOrThrow());
 
-        userRepository.save(userToLog);
+                userRepository.save(userToLog);
 
-        RequestLogin credentials = new RequestLogin(
-                "john.doe@testlogin.test",
-                "TestPassword1!"
-        );
+                RequestLogin credentials = new RequestLogin(
+                                "john.doe@testlogin.test",
+                                "TestPassword1!");
 
-        MvcResult result = mockMvc.perform(post("/api/auth/signin")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(credentials)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.jwt").exists())
-                .andReturn();
+                MvcResult result = mockMvc.perform(post("/api/auth/signin")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(credentials)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
+                                .andReturn();
 
-        String responseBody = result.getResponse().getContentAsString();
+                String responseBody = result.getResponse().getContentAsString();
 
-        ApiResponse<JwtDto> apiResponse = objectMapper.readValue(
-                responseBody,
-                new TypeReference<ApiResponse<JwtDto>>() {}
-        );
-        String token = apiResponse.getData().getJwt();
+                ApiResponse<JwtDto> apiResponse = objectMapper.readValue(
+                                responseBody,
+                                new TypeReference<ApiResponse<JwtDto>>() {
+                                });
+                String token = apiResponse.getData().getAccessToken();
 
-        assertEquals(3, token.split("\\.").length, "JWT should have 3 parts");
+                assertEquals(3, token.split("\\.").length, "JWT should have 3 parts");
 
-        // Proceed to assert that token data is what is expected
-        String secret = jwtProperties.getSecret();
-        byte[] keyBytes = secret.getBytes();
+                // Proceed to assert that token data is what is expected
+                String secret = jwtProperties.getSecret();
+                byte[] keyBytes = secret.getBytes();
 
-        Jws<Claims> jwsClaims = Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(keyBytes))
-                .build()
-                .parseClaimsJws(token);
+                Jws<Claims> jwsClaims = Jwts.parserBuilder()
+                                .setSigningKey(Keys.hmacShaKeyFor(keyBytes))
+                                .build()
+                                .parseClaimsJws(token);
 
-        Claims claims = jwsClaims.getBody();
-        assertEquals("john.doe@testlogin.test", claims.getSubject(), "email should correspond");
+                Claims claims = jwsClaims.getBody();
+                assertEquals("john.doe@testlogin.test", claims.getSubject(), "email should correspond");
 
-        String uuidStr = claims.get("uuid", String.class);
-        UUID uuidInToken = UUID.fromString(uuidStr);
-        assertEquals(userToLog.getId(), uuidInToken, "uuid should correspond");
+                String uuidStr = claims.get("uuid", String.class);
+                UUID uuidInToken = UUID.fromString(uuidStr);
+                assertEquals(userToLog.getId(), uuidInToken, "uuid should correspond");
 
-        assertEquals("John", claims.get("firstName", String.class), "firstName should correspond");
-        assertEquals("Doe", claims.get("lastName", String.class), "lastName should correspond");
-        assertEquals("JohnLogin", claims.get("displayName", String.class), "displayName should correspond");
+                assertEquals("John", claims.get("firstName", String.class), "firstName should correspond");
+                assertEquals("Doe", claims.get("lastName", String.class), "lastName should correspond");
+                assertEquals("JohnLogin", claims.get("displayName", String.class), "displayName should correspond");
 
-        List<String> rolesList = claims.get("roles", List.class);
-        assertEquals(1, rolesList.size(), "Should have only one role");
-        assertEquals(userRole.getName(), rolesList.get(0), "role should match default role");
+                List<String> rolesList = claims.get("roles", List.class);
+                assertEquals(1, rolesList.size(), "Should have only one role");
+                assertEquals(userRole.getName(), rolesList.get(0), "role should match default role");
 
-        assertEquals(userToLog.getCreatedAt().getTime(), claims.get("userCreatedAt", Long.class), "Should have creation timestamp");
-        assertNotNull(claims.getIssuedAt(), "Should have time issued");
-        assertNotNull(claims.getExpiration(), "Should have expiration date");
-        assertTrue(claims.getExpiration().after(new Date()), "Should not have passed expiration date");
-    }
+                assertEquals(userToLog.getCreatedAt().getTime(), claims.get("userCreatedAt", Long.class),
+                                "Should have creation timestamp");
+                assertNotNull(claims.getIssuedAt(), "Should have time issued");
+                assertNotNull(claims.getExpiration(), "Should have expiration date");
+                assertTrue(claims.getExpiration().after(new Date()), "Should not have passed expiration date");
+        }
 }

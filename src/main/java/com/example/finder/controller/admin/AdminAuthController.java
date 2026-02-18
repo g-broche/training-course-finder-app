@@ -3,6 +3,8 @@ package com.example.finder.controller.admin;
 import com.example.finder.dto.input.RequestLogin;
 import com.example.finder.service.AuthService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +25,35 @@ public class AdminAuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> adminLogout() {
-        return authService.logout();
+    public ResponseEntity<?> adminLogout(HttpServletRequest request) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        return authService.logoutAdmin(refreshToken);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshToken == null) {
+            return authService.refreshAdminToken("");
+        }
+
+        return authService.refreshAdminToken(refreshToken);
     }
 }

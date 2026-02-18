@@ -1,6 +1,7 @@
 package com.example.finder.controller;
 
 import com.example.finder.dto.input.RequestLogin;
+import com.example.finder.dto.input.RequestRefreshToken;
 import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.service.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,11 @@ public class AuthController {
         return authService.logUser(request);
     }
 
+    @PostMapping("/signoff")
+    public ResponseEntity<?> logout(@RequestBody RequestRefreshToken request) {
+        return authService.logout(request);
+    }
+
     @GetMapping("/verify/{token}")
     public ResponseEntity<?> verifyEmail(@PathVariable String token) {
         return authService.validateRegistrationToken(token);
@@ -37,5 +43,10 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getCurrentUser() {
         return authService.getCurrentUser();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody RequestRefreshToken request) {
+        return authService.refreshToken(request.getRefreshToken());
     }
 }

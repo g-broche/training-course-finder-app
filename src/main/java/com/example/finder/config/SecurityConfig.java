@@ -2,6 +2,9 @@ package com.example.finder.config;
 
 import com.example.finder.service.CustomUserDetailsService;
 import com.example.finder.utils.jwt.JwtFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,24 +72,37 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/me").authenticated()
-                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").authenticated()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/categories").permitAll()
-                        .requestMatchers("/api/announces/found/paginated").permitAll()
+                        .requestMatchers("/api/announces/*/discussions/**").authenticated()
+                        .requestMatchers("/api/announces/*/discussions").authenticated()
+                        .requestMatchers("/api/announces/*/update/**").authenticated()
+                        .requestMatchers("/api/announces/found/new").authenticated()
+                        .requestMatchers("/api/announces/found/**").permitAll()
+                        .requestMatchers("/api/announces/lost/new").authenticated()
+                        .requestMatchers("/api/announces/lost/**").permitAll()
                         .requestMatchers("/api/announces/my-announces").authenticated()
                         .requestMatchers("/api/announces/**").permitAll()
+                        .requestMatchers("/api/discussions/**").authenticated()
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                        }))
                 .build();
     }
 
     /**
-     *
      * @param userDetailsService
      * @return
      */

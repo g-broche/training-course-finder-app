@@ -8,6 +8,7 @@ import org.springframework.http.ResponseCookie;
 import jakarta.servlet.http.Cookie;
 
 import com.example.finder.model.AppUser;
+import com.example.finder.model.RefreshToken;
 import com.example.finder.utils.jwt.JwtUtil;
 
 @Component
@@ -21,18 +22,35 @@ public class CookieUtil {
     }
 
     /**
-     * Generates the cookie containing the token representing a logged user
+     * Generates the cookie containing the access token for logged user
+     * (short-lived)
      * 
      * @param loggedUser
-     * @return cookie
+     * @return ResponseCookie
      */
-    public ResponseCookie generateCookieFromUser(AppUser loggedUser) {
-        String token = JwtUtil.generateToken(loggedUser);
-        return ResponseCookie.from("jwt", token)
+    public ResponseCookie generateAccessTokenCookie(AppUser loggedUser) {
+        String accessToken = JwtUtil.generateAccessToken(loggedUser);
+        return ResponseCookie.from("accessToken", accessToken)
                 .httpOnly(true)
                 .secure(MustCookieBeSecure)
                 .path("/")
-                .maxAge(Duration.ofDays(1))
+                .maxAge(Duration.ofMinutes(15))
+                .sameSite("Lax")
+                .build();
+    }
+
+    /**
+     * Generates the cookie containing the refresh token (long-lived)
+     * 
+     * @param refreshToken
+     * @return ResponseCookie
+     */
+    public ResponseCookie generateRefreshTokenCookie(RefreshToken refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken.getToken())
+                .httpOnly(true)
+                .secure(MustCookieBeSecure)
+                .path("/")
+                .maxAge(Duration.ofDays(7))
                 .sameSite("Lax")
                 .build();
     }
@@ -44,6 +62,36 @@ public class CookieUtil {
      */
     public ResponseCookie generateExpiredCookie() {
         return ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(MustCookieBeSecure)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+    }
+
+    /**
+     * Generates expired access token cookie
+     * 
+     * @return ResponseCookie
+     */
+    public ResponseCookie generateExpiredAccessTokenCookie() {
+        return ResponseCookie.from("accessToken", "")
+                .httpOnly(true)
+                .secure(MustCookieBeSecure)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+    }
+
+    /**
+     * Generates expired refresh token cookie
+     * 
+     * @return ResponseCookie
+     */
+    public ResponseCookie generateExpiredRefreshTokenCookie() {
+        return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(MustCookieBeSecure)
                 .path("/")

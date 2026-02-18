@@ -89,8 +89,8 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
                 "regular@test.test",
                 "UserPassword123!");
 
-        adminToken = jwtUtil.generateToken(adminUser);
-        userToken = jwtUtil.generateToken(regularUser);
+        adminToken = jwtUtil.generateAccessToken(adminUser);
+        userToken = jwtUtil.generateAccessToken(regularUser);
 
         // Create test category
         testCategory = new Category("Electronics");
@@ -176,11 +176,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetAnnounceDetail_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetAnnounceDetail_WithoutToken_Unauthorized() throws Exception {
         UUID announceId = testAnnounces.get(0).getId();
 
         mockMvc.perform(get("/api/admin/announces/{uuid}", announceId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -264,11 +264,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetPaginatedAnnounces_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetPaginatedAnnounces_WithoutToken_Unauthorized() throws Exception {
         mockMvc.perform(get("/api/admin/announces/paginated")
                 .param("page", "0")
                 .param("size", "50"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -300,11 +300,11 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     }
 
     @Test
-    void testGetAnnounceDiscussions_WithoutToken_ReturnsForbidden() throws Exception {
+    void testGetAnnounceDiscussions_WithoutToken_Unauthorized() throws Exception {
         UUID announceId = testAnnounces.get(0).getId();
 
         mockMvc.perform(get("/api/admin/announces/{uuid}/discussions", announceId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
 }

@@ -46,10 +46,10 @@ public class JwtFilter extends OncePerRequestFilter {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 jwt = authHeader.substring(7); // strip "Bearer "
             }
-            // Second: If not in header, try to extract token from "token" cookie
+            // Second: If not in header, try to extract token from "accessToken" cookie
             if (jwt == null && request.getCookies() != null) {
                 for (Cookie cookie : request.getCookies()) {
-                    if ("jwt".equals(cookie.getName())) {
+                    if ("accessToken".equals(cookie.getName())) {
                         jwt = cookie.getValue();
                         break;
                     }
