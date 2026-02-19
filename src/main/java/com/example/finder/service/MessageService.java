@@ -19,17 +19,14 @@ import java.util.UUID;
 public class MessageService {
     private final DiscussionRepository discussionRepository;
     private final MessageRepository messageRepository;
-    private final RecordStatusRepository recordStatusRepository;
     private final ValidatorAuth validatorAuth;
 
     public MessageService(
             DiscussionRepository discussionRepository,
             MessageRepository messageRepository,
-            RecordStatusRepository recordStatusRepository,
             ValidatorAuth validatorAuth) {
         this.discussionRepository = discussionRepository;
         this.messageRepository = messageRepository;
-        this.recordStatusRepository = recordStatusRepository;
         this.validatorAuth = validatorAuth;
     }
 

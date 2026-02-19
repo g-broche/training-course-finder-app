@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>finder</artifactId>
+	<artifactId>retriever</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>finder</name>
-	<description>Brief task for a training course</description>
+	<name>retriever</name>
+	<description>Headless api for an application dedicated to finding lost items</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -109,6 +109,11 @@
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk18on</artifactId>
 			<version>1.81</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>1.11.0</version>
 		</dependency>
 	</dependencies>
 

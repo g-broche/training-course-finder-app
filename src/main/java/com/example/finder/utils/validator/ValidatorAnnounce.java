@@ -1,18 +1,15 @@
 package com.example.finder.utils.validator;
 
 import com.example.finder.dto.input.RequestAnnounce;
-import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.utils.StringUtil;
-import jakarta.persistence.Column;
-import jakarta.persistence.Lob;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Component
 public class ValidatorAnnounce {

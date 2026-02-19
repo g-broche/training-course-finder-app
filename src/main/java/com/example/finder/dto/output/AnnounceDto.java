@@ -1,8 +1,6 @@
 package com.example.finder.dto.output;
 
 import com.example.finder.model.*;
-import com.example.finder.utils.ImageUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;

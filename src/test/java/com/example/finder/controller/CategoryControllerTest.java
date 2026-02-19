@@ -1,6 +1,5 @@
 package com.example.finder.controller;
 
-import com.example.finder.dto.output.CategoryDto;
 import com.example.finder.model.Category;
 import com.example.finder.repository.*;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ class CategoryControllerTest {
     private MockMvc mockMvc;
 
     @Test
-    void testGetCategories_ShouldReturnAllDefaultCategories()throws Exception{
+    void testGetCategories_ShouldReturnAllDefaultCategories() throws Exception {
         List<Category> expectedCategories = categoryRepository.findAll();
         int expectedQuantity = expectedCategories.size();
 

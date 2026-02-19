@@ -17,7 +17,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,6 +35,7 @@ class DiscussionControllerTest extends UserRelatedTest {
         @Autowired
         private MockMvc mockMvc;
 
+        @SuppressWarnings("unused")
         @Autowired
         private ObjectMapper objectMapper;
 

@@ -4,7 +4,6 @@ import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestAnnounceStatus;
 import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestInteractivityState;
-import com.example.finder.model.AnnounceType;
 import com.example.finder.model.enums.AvailableAnnounceStatus;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.model.enums.AvailableInteractivityState;

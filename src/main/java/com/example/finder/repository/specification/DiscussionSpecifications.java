@@ -1,7 +1,5 @@
 package com.example.finder.repository.specification;
 
-import com.example.finder.model.Announce;
-import com.example.finder.model.AnnounceType;
 import com.example.finder.model.Discussion;
 import com.example.finder.model.enums.AvailableInteractivityState;
 import com.example.finder.model.enums.AvailableRecordStatus;

@@ -45,6 +45,7 @@ import java.util.Set;
 
 @Service
 public class AuthService {
+    @SuppressWarnings("unused")
     @Autowired
     private Environment environment;
     private final SanitizerUtil sanitizerUtil;

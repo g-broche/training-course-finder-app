@@ -1,6 +1,5 @@
 package com.example.finder.model;
 
-import com.example.finder.dto.output.CategoryDto;
 import com.example.finder.dto.output.MessageDTO;
 import jakarta.persistence.*;
 import org.hibernate.annotations.*;
@@ -126,7 +125,7 @@ public class Message {
         this.editedAt = editedAt;
     }
 
-    public MessageDTO toDto(){
+    public MessageDTO toDto() {
         return new MessageDTO(this);
     }
 }
