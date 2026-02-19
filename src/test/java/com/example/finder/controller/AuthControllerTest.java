@@ -71,6 +71,7 @@ class AuthControllerTest {
         @Autowired
         private JwtProperties jwtProperties;
 
+        @SuppressWarnings("unused")
         @Test
         void testRegister_GivenValidData_CreatesNewUser() throws Exception {
                 RequestRegister registerData = new RequestRegister(
@@ -102,6 +103,7 @@ class AuthControllerTest {
                                 "Hashed password should match clear password");
         }
 
+        @SuppressWarnings("unchecked")
         @Test
         void testLogin_GivenValidCredentials_ReturnsOkWithToken() throws Exception {
                 AppUser userToLog = new AppUser(

@@ -1,7 +1,5 @@
 package com.example.finder.response.enums;
 
-import java.util.Map;
-
 public enum AuthError {
     EMAIL_ALREADY_USED("The email is already in use"),
     INVALID_REGISTER_DATA("The information sent to register a new user is invalid"),

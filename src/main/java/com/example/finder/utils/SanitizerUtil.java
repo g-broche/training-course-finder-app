@@ -4,10 +4,8 @@ import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestMessage;
 import com.example.finder.dto.input.RequestRegister;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
 
 @Component
 public class SanitizerUtil {

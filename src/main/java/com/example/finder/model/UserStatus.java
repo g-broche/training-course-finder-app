@@ -2,8 +2,6 @@ package com.example.finder.model;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 import com.example.finder.dto.output.UserStatusDto;
 
 @Entity

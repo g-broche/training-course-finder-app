@@ -13,7 +13,6 @@ import com.example.finder.service.AnnounceService;
 import com.example.finder.service.DiscussionService;
 import com.example.finder.utils.EnumUtil;
 
-import org.apache.catalina.connector.Request;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

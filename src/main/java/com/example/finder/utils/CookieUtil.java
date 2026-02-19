@@ -5,7 +5,6 @@ import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.http.ResponseCookie;
-import jakarta.servlet.http.Cookie;
 
 import com.example.finder.model.AppUser;
 import com.example.finder.model.RefreshToken;

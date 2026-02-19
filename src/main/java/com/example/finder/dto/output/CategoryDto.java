@@ -1,9 +1,6 @@
 package com.example.finder.dto.output;
 
 import com.example.finder.model.Category;
-import com.example.finder.model.Role;
-
-import java.util.UUID;
 
 public class CategoryDto {
     private Long id;

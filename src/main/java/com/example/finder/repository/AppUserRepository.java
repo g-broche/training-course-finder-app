@@ -1,7 +1,6 @@
 package com.example.finder.repository;
 
 import com.example.finder.model.AppUser;
-import com.example.finder.model.Discussion;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

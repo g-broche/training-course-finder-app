@@ -5,7 +5,6 @@ import com.example.finder.model.*;
 import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.repository.*;
 import com.example.finder.utils.jwt.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -70,6 +69,7 @@ class AdminAnnounceControllerTest extends UserRelatedTest {
     private String userToken;
     private Category testCategory;
     private List<Announce> testAnnounces;
+    @SuppressWarnings("unused")
     private Announce hiddenAnnounce;
 
     @BeforeAll

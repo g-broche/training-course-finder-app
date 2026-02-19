@@ -1,6 +1,5 @@
 package com.example.finder.controller;
 
-import com.example.finder.dto.input.RequestAnnounce;
 import com.example.finder.model.*;
 import com.example.finder.repository.*;
 import com.example.finder.utils.ImageUtil;
@@ -31,7 +30,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
@@ -46,6 +44,7 @@ class AnnounceControllerTest extends UserRelatedTest {
         @Autowired
         private MockMvc mockMvc;
 
+        @SuppressWarnings("unused")
         @Autowired
         private ObjectMapper objectMapper;
 

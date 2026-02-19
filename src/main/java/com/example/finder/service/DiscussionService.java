@@ -3,7 +3,6 @@ package com.example.finder.service;
 import com.example.finder.config.PaginationConfig;
 import com.example.finder.dto.input.RequestDiscussion;
 import com.example.finder.dto.input.RequestMessage;
-import com.example.finder.dto.input.RequestRecordStatus;
 import com.example.finder.dto.output.AdminDetailedDiscussionDTO;
 import com.example.finder.dto.output.AdminDiscussionDTO;
 import com.example.finder.dto.output.AnnounceDto;
@@ -12,9 +11,7 @@ import com.example.finder.dto.output.ErrorDto;
 import com.example.finder.exception.action.InvalidRequestException;
 import com.example.finder.exception.action.UnauthorizedException;
 import com.example.finder.model.*;
-import com.example.finder.model.enums.AvailableAnnounceTypes;
 import com.example.finder.model.enums.AvailableInteractivityState;
-import com.example.finder.model.enums.AvailableRecordStatus;
 import com.example.finder.repository.*;
 import com.example.finder.repository.specification.AnnounceSpecifications;
 import com.example.finder.repository.specification.DiscussionSpecifications;
@@ -32,15 +29,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -359,7 +350,6 @@ public class DiscussionService {
 
     public ResponseEntity<?> getRelatedAnnounce(UUID discussionUuid, boolean withHiddenData) {
         try {
-            AppUser requester = validatorAuth.getUserFromSecurityContext();
             Specification<Announce> spec = Specification.allOf(
                     AnnounceSpecifications.hasDiscussion(discussionUuid));
             if (!withHiddenData) {

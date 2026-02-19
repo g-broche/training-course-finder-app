@@ -1,22 +1,9 @@
 package com.example.finder.controller.admin;
 
-import com.example.finder.dto.input.RequestAnnounceStatus;
-import com.example.finder.dto.input.RequestAnnounceType;
-import com.example.finder.dto.input.RequestInteractivityState;
-import com.example.finder.dto.input.RequestRecordStatus;
-import com.example.finder.model.enums.AvailableAnnounceStatus;
-import com.example.finder.model.enums.AvailableAnnounceTypes;
-import com.example.finder.model.enums.AvailableInteractivityState;
-import com.example.finder.model.enums.AvailableRecordStatus;
-import com.example.finder.response.ApiResponseFactory;
-import com.example.finder.service.AnnounceService;
-import com.example.finder.service.DiscussionService;
 import com.example.finder.service.UserService;
-import com.example.finder.utils.EnumUtil;
 
 import java.util.UUID;
 
-import org.apache.catalina.connector.Request;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,13 +13,10 @@ import org.springframework.web.bind.annotation.*;
 public class AdminUserController {
 
     private final UserService userService;
-    private final EnumUtil enumUtil;
 
     public AdminUserController(
-            UserService userService,
-            EnumUtil enumUtil) {
+            UserService userService) {
         this.userService = userService;
-        this.enumUtil = enumUtil;
     }
 
     @GetMapping("/{username}")

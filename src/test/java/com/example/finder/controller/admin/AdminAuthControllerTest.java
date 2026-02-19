@@ -47,14 +47,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @SpringBootTest
 class AdminAuthControllerTest extends UserRelatedTest {
+        @SuppressWarnings("unused")
         @Autowired
         private AppUserRepository userRepository;
+        @SuppressWarnings("unused")
         @Autowired
         private RoleRepository roleRepository;
+        @SuppressWarnings("unused")
         @Autowired
         private UserStatusRepository userStatusRepository;
+        @SuppressWarnings("unused")
         @Autowired
         private RecordStatusRepository recordStatusRepository;
+        @SuppressWarnings("unused")
         @Autowired
         private PasswordEncoder passwordEncoder;
 
@@ -111,6 +116,7 @@ class AdminAuthControllerTest extends UserRelatedTest {
                 assertTrue(setCookieHeader.contains("SameSite=Lax"), "Cookie should have SameSite=Lax");
         }
 
+        @SuppressWarnings("unchecked")
         @Test
         void testAdminLogin_GivenValidAdminCredentials_CookieContainsJwtWithAdminRole() throws Exception {
                 RequestLogin credentials = new RequestLogin(

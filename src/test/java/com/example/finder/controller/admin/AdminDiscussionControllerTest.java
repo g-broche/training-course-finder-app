@@ -4,7 +4,6 @@ import com.example.finder.controller.UserRelatedTest;
 import com.example.finder.model.*;
 import com.example.finder.repository.*;
 import com.example.finder.utils.jwt.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;

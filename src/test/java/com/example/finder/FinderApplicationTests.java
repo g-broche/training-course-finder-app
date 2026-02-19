@@ -1,16 +1,12 @@
 package com.example.finder;
 
 import com.example.finder.model.Category;
-import com.example.finder.model.Role;
 import com.example.finder.repository.*;
 import com.example.finder.seeders.CategorySeeder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
@@ -41,7 +37,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void rolesAreSeededInDatabase(){
+	void rolesAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> roleRepository.getAdminRoleOrThrow(),
 				"'Admin' role should exist due to seeding");
@@ -51,7 +47,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void userStatusAreSeededInDatabase(){
+	void userStatusAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> userStatusRepository.getAllowedUserStatusOrThrow(),
 				"'Allowed' user status should exist due to seeding");
@@ -61,7 +57,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void recordStatusAreSeededInDatabase(){
+	void recordStatusAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> recordStatusRepository.getShownRecordStatusOrThrow(),
 				"'Shown' record status should exist due to seeding");
@@ -74,7 +70,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void interactivityStatesAreSeededInDatabase(){
+	void interactivityStatesAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> interactivityStateRepository.getOpenInteractivityStateOrThrow(),
 				"'Open' interactivity state should exist due to seeding");
@@ -84,7 +80,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void announceTypesAreSeededInDatabase(){
+	void announceTypesAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> announceTypeRepository.getFoundAnnounceTypeOrThrow(),
 				"'Found' announce type should exist due to seeding");
@@ -94,7 +90,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void announceStatusAreSeededInDatabase(){
+	void announceStatusAreSeededInDatabase() {
 		assertDoesNotThrow(
 				() -> announceStatusRepository.getSolvedAnnounceStatusOrThrow(),
 				"'Solved' announce type should exist due to seeding");
@@ -104,7 +100,7 @@ class FinderApplicationTests {
 	}
 
 	@Test
-	void databaseHasCategories(){
+	void databaseHasCategories() {
 		List<Category> foundCategories = categoryRepository.findAll();
 		assertFalse(foundCategories.isEmpty());
 	}

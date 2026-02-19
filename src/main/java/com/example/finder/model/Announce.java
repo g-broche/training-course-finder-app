@@ -1,6 +1,5 @@
 package com.example.finder.model;
 
-import com.example.finder.dto.output.AnnounceDto;
 import jakarta.persistence.*;
 import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;

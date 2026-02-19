@@ -1,10 +1,7 @@
 package com.example.finder.model;
 
 import com.example.finder.dto.output.CategoryDto;
-import com.example.finder.dto.output.RoleDto;
 import jakarta.persistence.*;
-
-import java.util.UUID;
 
 @Entity
 public class Category {
@@ -15,7 +12,8 @@ public class Category {
     @Column(name = "name", nullable = false, length = 30)
     private String name;
 
-    public Category() {}
+    public Category() {
+    }
 
     public Category(String name) {
         this.setName(name);
@@ -37,7 +35,7 @@ public class Category {
         this.name = name;
     }
 
-    public CategoryDto toDto(){
+    public CategoryDto toDto() {
         return new CategoryDto(this);
     }
 }
