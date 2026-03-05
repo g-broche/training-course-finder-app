@@ -9,19 +9,18 @@ import java.util.Set;
 
 @Component
 public class ValidatorImage {
-private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
-        "image/jpeg",
-        "image/png",
-        "image/webp");
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp");
 
-public boolean validateImage(MultipartFile image) {
-    if (image == null || image.isEmpty()) {
-        throw new NullFileException();
+    public boolean validateImage(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new NullFileException();
+        }
+        if (!ALLOWED_MIME_TYPES.contains(image.getContentType())) {
+            throw new InvalidImageException("Invalid image type. Allowed types: JPEG, PNG, WEBP.");
+        }
+        return true;
     }
-    if (!ALLOWED_MIME_TYPES.contains(image.getContentType())) {
-        throw new InvalidImageException("Invalid image type. Allowed types: JPEG, PNG, WEBP.");
-    }
-    return true;
 }
-}
-

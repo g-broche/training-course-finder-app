@@ -41,7 +41,6 @@ import java.util.UUID;
 
 @Service
 public class UserService {
-    @Autowired
     private final AppUserRepository userRepository;
     private final DiscussionRepository discussionRepository;
     private final AnnounceRepository announceRepository;
@@ -68,6 +67,15 @@ public class UserService {
         this.paginationConfig = paginationConfig;
         this.validatorAuth = validatorAuth;
         this.imageUtil = imageUtil;
+    }
+
+    public ResponseEntity<?> isDisplayNameAvailable(String displayName) {
+        try {
+            boolean isAvailable = !userRepository.existsByDisplayName(displayName);
+            return ApiResponseFactory.success(isAvailable);
+        } catch (Exception e) {
+            return ApiResponseFactory.internalError();
+        }
     }
 
     public ResponseEntity<?> getUserDetailForModeration(String username) {

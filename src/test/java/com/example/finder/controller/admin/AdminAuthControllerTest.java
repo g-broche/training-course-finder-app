@@ -9,6 +9,7 @@ import com.example.finder.repository.AppUserRepository;
 import com.example.finder.repository.RecordStatusRepository;
 import com.example.finder.repository.RoleRepository;
 import com.example.finder.repository.UserStatusRepository;
+import com.example.finder.service.EmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
@@ -71,6 +73,9 @@ class AdminAuthControllerTest extends UserRelatedTest {
 
         @Autowired
         private JwtProperties jwtProperties;
+
+        @MockitoBean
+        private EmailService emailService;
 
         private AppUser adminUser;
         private AppUser regularUser;

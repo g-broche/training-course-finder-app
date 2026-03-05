@@ -34,7 +34,7 @@ public class AuthController {
         return authService.logout(request);
     }
 
-    @GetMapping("/verify/{token}")
+    @GetMapping("/activate/{token}")
     public ResponseEntity<?> verifyEmail(@PathVariable String token) {
         return authService.validateRegistrationToken(token);
     }

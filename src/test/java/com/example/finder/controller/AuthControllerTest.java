@@ -12,6 +12,7 @@ import com.example.finder.repository.RecordStatusRepository;
 import com.example.finder.repository.RoleRepository;
 import com.example.finder.repository.UserStatusRepository;
 import com.example.finder.response.ApiResponse;
+import com.example.finder.service.EmailService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
@@ -71,6 +73,9 @@ class AuthControllerTest {
         @Autowired
         private JwtProperties jwtProperties;
 
+        @MockitoBean
+        private EmailService emailService;
+
         @SuppressWarnings("unused")
         @Test
         void testRegister_GivenValidData_CreatesNewUser() throws Exception {
@@ -87,6 +92,7 @@ class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(registerData)))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data.accessToken").exists())
+                                .andExpect(jsonPath("$.data.refreshToken").exists())
                                 .andReturn();
 
                 AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();

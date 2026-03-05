@@ -25,6 +25,9 @@ import com.example.finder.utils.CookieUtil;
 import com.example.finder.utils.SanitizerUtil;
 import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorUser;
+
+import jakarta.validation.constraints.Email;
+
 import com.example.finder.utils.jwt.JwtUtil;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +63,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
     private final CookieUtil cookieUtil;
 
     public AuthService(
@@ -75,6 +79,7 @@ public class AuthService {
             RefreshTokenService refreshTokenService,
             RefreshTokenRepository refreshTokenRepository,
             CookieUtil cookieUtil,
+            EmailService emailService,
             ValidatorAuth validatorAuth) {
         this.sanitizerUtil = sanitizerUtil;
         this.validatorUser = validatorUser;
@@ -88,6 +93,7 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.cookieUtil = cookieUtil;
+        this.emailService = emailService;
         this.validatorAuth = validatorAuth;
     }
 
@@ -105,6 +111,10 @@ public class AuthService {
                 return ApiResponseFactory.badRequest(
                         AuthError.EMAIL_ALREADY_USED.getErrorMessage());
             }
+            if (userRepository.existsByDisplayName(registerData.getDisplayName())) {
+                return ApiResponseFactory.badRequest(
+                        AuthError.DISPLAY_NAME_ALREADY_USED.getErrorMessage());
+            }
             // sanitize and validate request
             RequestRegister sanitizedRequest = sanitizerUtil.sanitizeRegisterInputs(registerData);
             List<ErrorDto> validationErrors = validatorUser.validateRegisterInputs(sanitizedRequest);
@@ -117,6 +127,11 @@ public class AuthService {
             // create new user, create a token with the user safe data and return it in the
             // response
             AppUser createdUser = createNewUserFromData(registerData);
+            String activationToken = createdUser.getActivationToken();
+
+            // send verification email to the newly created user
+            emailService.sendRegistrationActivationEmail(createdUser, activationToken);
+
             String accessToken = jwtUtil.generateAccessToken(createdUser);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(createdUser);
             return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));
@@ -170,10 +185,12 @@ public class AuthService {
             user.setIsVerified(true);
             user.setActivationToken(null);
             userRepository.save(user);
+            emailService.sendConfirmedVerificationEmail(user);
             return ApiResponseFactory.success("Email has been verified successfully");
         } catch (UserNotFoundException e) {
             return ApiResponseFactory.badRequest(AuthError.INVALID_VERIFICATION_TOKEN.getErrorMessage());
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
             return ApiResponseFactory.internalError();
         }
@@ -345,6 +362,7 @@ public class AuthService {
 
             return ApiResponseFactory.success(new JwtDto(newAccessToken, newRefreshToken.getToken()));
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
             return ApiResponseFactory.unauthorized("Invalid refresh token");
         }
@@ -378,6 +396,7 @@ public class AuthService {
                     cookieUtil.generateAccessTokenCookie(user),
                     cookieUtil.generateRefreshTokenCookie(newRefreshToken));
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
             return ApiResponseFactory.unauthorized("Invalid refresh token");
         }
