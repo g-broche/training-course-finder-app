@@ -76,7 +76,6 @@ class AuthControllerTest {
         @MockitoBean
         private EmailService emailService;
 
-        @SuppressWarnings("unused")
         @Test
         void testRegister_GivenValidData_CreatesNewUser() throws Exception {
                 RequestRegister registerData = new RequestRegister(
@@ -87,13 +86,12 @@ class AuthControllerTest {
                                 "TestPassword1!",
                                 true);
 
-                MvcResult result = mockMvc.perform(post("/api/auth/signup")
+                mockMvc.perform(post("/api/auth/signup")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerData)))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data.accessToken").exists())
-                                .andExpect(jsonPath("$.data.refreshToken").exists())
-                                .andReturn();
+                                .andExpect(jsonPath("$.data.refreshToken").exists());
 
                 AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();
 

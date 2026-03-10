@@ -38,5 +38,5 @@ build/
 **/resources/**.properties
 !**/resources/application-test.properties
 
-### SCRIPTS ###
-deploy*
+### WIP memo doc ###
+.wip

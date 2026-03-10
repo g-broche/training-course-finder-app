@@ -32,7 +32,7 @@ jobs:
           path: ~/.m2  # Location of Maven local repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}  # Cache key based on OS and pom.xml hash
           restore-keys: |
-            ${{ runner.os }}-maven-  # Fallback cache key if exact match not found
+            ${{ runner.os }}-maven-     # Fallback cache key if exact match not found
 
       # Step 4: Clean previous builds, compile code, and run all tests
       - name: Build anew and run tests

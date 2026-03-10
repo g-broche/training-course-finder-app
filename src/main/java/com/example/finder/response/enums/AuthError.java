@@ -6,6 +6,7 @@ public enum AuthError {
     INVALID_REGISTER_DATA("The information sent to register a new user is invalid"),
     INVALID_CREDENTIALS("The credentials provided are invalid"),
     GUEST_FORBIDDEN("Guest user cannot access this resource"),
+    USER_BANNED("Your account has been banned."),
     INVALID_VERIFICATION_TOKEN("The verification token is invalid");
 
     private final String errorMessage;

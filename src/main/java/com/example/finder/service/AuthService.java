@@ -14,6 +14,7 @@ import com.example.finder.model.RecordStatus;
 import com.example.finder.model.RefreshToken;
 import com.example.finder.model.Role;
 import com.example.finder.model.UserStatus;
+import com.example.finder.model.enums.AvailableUserStatus;
 import com.example.finder.repository.AppUserRepository;
 import com.example.finder.repository.RecordStatusRepository;
 import com.example.finder.repository.RefreshTokenRepository;
@@ -158,6 +159,10 @@ public class AuthService {
 
             // get user data from user details en return a token containing safe data
             AppUser user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+            boolean isUserbanned = user.getUserStatus().getName().equals(AvailableUserStatus.BANNED.getDisplayName());
+            if (isUserbanned) {
+                return ApiResponseFactory.unauthorized(AuthError.USER_BANNED.getErrorMessage());
+            }
             String accessToken = jwtUtil.generateAccessToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
             return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));

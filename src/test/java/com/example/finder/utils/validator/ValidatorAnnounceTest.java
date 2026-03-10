@@ -20,6 +20,12 @@ class ValidatorAnnounceTest {
     }
 
     // Tests for isValidTitle
+
+    @Test
+    void isValidTitle_ShouldReturnFalseForNull() {
+        assertFalse(validator.isValidTitle(null));
+    }
+
     @Test
     void isValidTitle_ShouldReturnTrueForValidTitle() {
         assertTrue(validator.isValidTitle("Lost Dog"));
@@ -34,11 +40,6 @@ class ValidatorAnnounceTest {
     void isValidTitle_ShouldReturnTrueForMaximumLengthTitle() {
         String maxTitle = "a".repeat(50);
         assertTrue(validator.isValidTitle(maxTitle));
-    }
-
-    @Test
-    void isValidTitle_ShouldReturnFalseForNull() {
-        assertFalse(validator.isValidTitle(null));
     }
 
     @Test
