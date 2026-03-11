@@ -15,10 +15,13 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID>, JpaSpec
 
     Optional<AppUser> findByEmail(String email);
 
+    boolean existsByDisplayName(String displayName);
+
     Optional<AppUser> findByActivationToken(String activationToken);
 
     @Query("SELECT u.activationToken FROM AppUser u WHERE u.activationToken IS NOT NULL")
     Set<String> findAllNonNullActivationTokens();
 
     Optional<AppUser> findByDisplayName(String displayName);
+
 }

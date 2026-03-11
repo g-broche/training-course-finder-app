@@ -101,6 +101,16 @@ public class AnnounceController {
                 size);
     }
 
+    @GetMapping("/with-discussions")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getConnectedUserAnnouncesWithDiscussion(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return announceService.getUserPaginatedAnnouncesWithDiscussion(
+                page,
+                size);
+    }
+
     @PostMapping(value = "/found/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createNewFoundAnnounce(
@@ -128,7 +138,7 @@ public class AnnounceController {
 
         } catch (Exception e) {
             Printer.printErrorLogWithDetails(e);
-            return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
+            return ApiResponseFactory.badRequest("Error processing request: " + e.getMessage());
         }
     }
 
@@ -159,7 +169,7 @@ public class AnnounceController {
 
         } catch (Exception e) {
             Printer.printErrorLogWithDetails(e);
-            return ResponseEntity.badRequest().body("Error processing request: " + e.getMessage());
+            return ApiResponseFactory.badRequest("Error processing request: " + e.getMessage());
         }
     }
 

@@ -575,6 +575,40 @@ public class AnnounceService {
         }
     }
 
+    /**
+     * get page of announces with active discussions involving the user
+     * data in a
+     * ApiResponse
+     * 
+     * @param page page to get
+     * @param size amount of announces per page
+     * @return api response with data according the the given parameters
+     */
+    public ResponseEntity<?> getUserPaginatedAnnouncesWithDiscussion(
+            int page,
+            int size) {
+        try {
+            AppUser requester = validatorAuth.getUserFromSecurityContext();
+            size = Math.min(size, paginationConfig.getMaxResultsPerPage());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+            Specification<Announce> spec = Specification.allOf(
+                    AnnounceSpecifications.hasDiscussionWithParticipant(requester.getId()),
+                    AnnounceSpecifications.hasShownStatus());
+            Page<Announce> announcePage = announceRepository.findAll(spec, pageable);
+            Page<AnnounceDto> announceDtoPage = announcePage.map((it) -> {
+                return new AnnounceDto(
+                        it,
+                        imageUtil.getBaseWebPathForPhotos());
+            });
+            var paginatedResult = PaginatedResponse.from(announceDtoPage);
+            return ApiResponseFactory.success(paginatedResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponseFactory.internalError();
+        }
+    }
+
     private ResponseEntity<?> handleUpdateAnnounceType(Announce announce, AvailableAnnounceTypes announceType) {
         try {
             AnnounceType newAnnounceType = announceTypeRepository

@@ -60,7 +60,7 @@ public class ExcerptUserDTOForAdmin {
         return email;
     }
 
-    public boolean isActive() {
+    public boolean getIsVerified() {
         return isVerified;
     }
 

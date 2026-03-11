@@ -24,13 +24,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    private final String allowedOrigin;
-    private final List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE");
+    private final List<String> allowedOrigins;
+    private final List<String> allowedMethods = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
     private final List<String> allowedHeaders = List.of("*");
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
@@ -38,10 +39,13 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtFilter jwtFilter,
             CustomUserDetailsService userDetailsService,
-            @Value("${cors.allowed-origin}") String allowedOrigin) {
+            @Value("${cors.allowed-origins}") String allowedOriginsProperty) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
-        this.allowedOrigin = allowedOrigin;
+        this.allowedOrigins = Arrays.stream(allowedOriginsProperty.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
     }
 
     /**
@@ -55,8 +59,8 @@ public class SecurityConfig {
                 16,
                 32,
                 1,
-                4096,
-                3);
+                20480,
+                2);
     }
 
     /**
@@ -72,10 +76,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/users/displayName/available").permitAll()
                         .requestMatchers("/api/categories").permitAll()
                         .requestMatchers("/api/announces/*/discussions/**").authenticated()
                         .requestMatchers("/api/announces/*/discussions").authenticated()
@@ -134,7 +142,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(allowedMethods);
         configuration.setAllowedHeaders(allowedHeaders);
         configuration.setAllowCredentials(true);

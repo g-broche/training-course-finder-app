@@ -1,30 +1,40 @@
 name: API pipeline
 
 on:
+  # Trigger on push to main or dev branches
   push:
     branches: [ main, dev ]
+  # Trigger on pull requests targeting main or dev branches
   pull_request:
       branches: [ main, dev ]
+
 jobs:
+  # Job to validate the build and run tests
   validate-build:
+    # Use the latest Ubuntu runner
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Download repository code to the runner
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Install Java Development Kit 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: 17
+          distribution: 'temurin'   # Use Eclipse Temurin
+          java-version: 17          # project java version
 
+      # Step 3: Cache Maven dependencies to speed up builds
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          path: ~/.m2  # Location of Maven local repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}  # Cache key based on OS and pom.xml hash
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-maven-     # Fallback cache key if exact match not found
 
+      # Step 4: Clean previous builds, compile code, and run all tests
       - name: Build anew and run tests
-        run: mvn clean verify
+        run: mvn clean verify  # Maven command: clean artifacts, compile, test, and verify
+
