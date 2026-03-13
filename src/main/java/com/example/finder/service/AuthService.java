@@ -27,8 +27,6 @@ import com.example.finder.utils.SanitizerUtil;
 import com.example.finder.utils.validator.ValidatorAuth;
 import com.example.finder.utils.validator.ValidatorUser;
 
-import jakarta.validation.constraints.Email;
-
 import com.example.finder.utils.jwt.JwtUtil;
 import com.example.finder.utils.logger.Printer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +133,10 @@ public class AuthService {
 
             String accessToken = jwtUtil.generateAccessToken(createdUser);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(createdUser);
-            return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));
+            return ApiResponseFactory.success(new JwtDto(
+                    accessToken,
+                    refreshToken.getToken(),
+                    createdUser.toDetailedUserDto()));
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
@@ -165,7 +166,10 @@ public class AuthService {
             }
             String accessToken = jwtUtil.generateAccessToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            return ApiResponseFactory.success(new JwtDto(accessToken, refreshToken.getToken()));
+            return ApiResponseFactory.success(new JwtDto(
+                    accessToken,
+                    refreshToken.getToken(),
+                    user.toDetailedUserDto()));
         } catch (AuthenticationException e) {
             return ApiResponseFactory.unauthorized(AuthError.INVALID_CREDENTIALS.getErrorMessage());
         } catch (Exception e) {
@@ -288,6 +292,7 @@ public class AuthService {
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
             return ApiResponseFactory.successWithCookies(
                     "Login successful",
+                    user.toDetailedUserDto(),
                     cookieUtil.generateAccessTokenCookie(user),
                     cookieUtil.generateRefreshTokenCookie(refreshToken));
         } catch (AuthenticationException e) {
@@ -365,7 +370,10 @@ public class AuthService {
             String newAccessToken = jwtUtil.generateAccessToken(user);
             RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
 
-            return ApiResponseFactory.success(new JwtDto(newAccessToken, newRefreshToken.getToken()));
+            return ApiResponseFactory.success(new JwtDto(
+                    newAccessToken,
+                    newRefreshToken.getToken(),
+                    user.toDetailedUserDto()));
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             Printer.printErrorLogWithDetails(e);
@@ -398,6 +406,7 @@ public class AuthService {
 
             return ApiResponseFactory.successWithCookies(
                     "Token refreshed successfully",
+                    user.toDetailedUserDto(),
                     cookieUtil.generateAccessTokenCookie(user),
                     cookieUtil.generateRefreshTokenCookie(newRefreshToken));
         } catch (Exception e) {

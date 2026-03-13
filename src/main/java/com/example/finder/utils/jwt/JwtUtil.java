@@ -2,16 +2,13 @@ package com.example.finder.utils.jwt;
 
 import com.example.finder.config.JwtProperties;
 import com.example.finder.model.AppUser;
-import com.example.finder.model.Role;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -23,43 +20,28 @@ public class JwtUtil {
 
     public String generateAccessToken(AppUser user) {
         return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("roles", user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
-                .claim("uuid", user.getId())
-                .claim("firstName", user.getFirstName())
-                .claim("lastName", user.getLastName())
-                .claim("displayName", user.getDisplayName())
-                .claim("isVerified", user.getIsVerified())
-                .claim("hasAcceptedGdpr", user.getHasAcceptGdpr())
-                .claim("userCreatedAt", user.getCreatedAt().getTime())
+                .setSubject(user.getId().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessTokenExpirationMs()))
                 .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String extractRole(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
-    }
-
-    public String extractUsername(String token) {
-        return Jwts.parserBuilder()
+    public UUID extractUserId(String token) {
+        String subject = Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+
+        return subject != null ? UUID.fromString(subject) : null;
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, AppUser user) {
         try {
-            String username = extractUsername(token);
-            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+            UUID tokenUserId = extractUserId(token);
+            return tokenUserId != null && tokenUserId.equals(user.getId()) && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
@@ -73,23 +55,6 @@ public class JwtUtil {
                 .getBody()
                 .getExpiration();
         return expiration.before(new Date());
-    }
-
-    public Long extractUserId(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("id", Long.class);
-    }
-
-    public Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
     }
 
 }

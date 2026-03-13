@@ -1,7 +1,6 @@
 package com.example.finder.controller;
 
 import com.example.finder.config.JwtProperties;
-import com.example.finder.dto.JwtDto;
 import com.example.finder.dto.input.RequestLogin;
 import com.example.finder.dto.input.RequestRegister;
 import com.example.finder.model.AppUser;
@@ -11,9 +10,8 @@ import com.example.finder.repository.AppUserRepository;
 import com.example.finder.repository.RecordStatusRepository;
 import com.example.finder.repository.RoleRepository;
 import com.example.finder.repository.UserStatusRepository;
-import com.example.finder.response.ApiResponse;
 import com.example.finder.service.EmailService;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -35,9 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -91,7 +87,9 @@ class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(registerData)))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data.accessToken").exists())
-                                .andExpect(jsonPath("$.data.refreshToken").exists());
+                                .andExpect(jsonPath("$.data.refreshToken").exists())
+                                .andExpect(jsonPath("$.data.user").exists())
+                                .andExpect(jsonPath("$.data.user.email").value(registerData.getEmail()));
 
                 AppUser createdUser = userRepository.findByEmail(registerData.getEmail()).orElseThrow();
 
@@ -107,7 +105,6 @@ class AuthControllerTest {
                                 "Hashed password should match clear password");
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void testLogin_GivenValidCredentials_ReturnsOkWithToken() throws Exception {
                 AppUser userToLog = new AppUser(
@@ -132,15 +129,13 @@ class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(credentials)))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data.accessToken").exists())
+                                .andExpect(jsonPath("$.data.user").exists())
+                                .andExpect(jsonPath("$.data.user.email").value(userToLog.getEmail()))
                                 .andReturn();
 
                 String responseBody = result.getResponse().getContentAsString();
-
-                ApiResponse<JwtDto> apiResponse = objectMapper.readValue(
-                                responseBody,
-                                new TypeReference<ApiResponse<JwtDto>>() {
-                                });
-                String token = apiResponse.getData().getAccessToken();
+                JsonNode root = objectMapper.readTree(responseBody);
+                String token = root.path("data").path("accessToken").asText();
 
                 assertEquals(3, token.split("\\.").length, "JWT should have 3 parts");
 
@@ -154,22 +149,11 @@ class AuthControllerTest {
                                 .parseClaimsJws(token);
 
                 Claims claims = jwsClaims.getBody();
-                assertEquals("john.doe@testlogin.test", claims.getSubject(), "email should correspond");
-
-                String uuidStr = claims.get("uuid", String.class);
-                UUID uuidInToken = UUID.fromString(uuidStr);
-                assertEquals(userToLog.getId(), uuidInToken, "uuid should correspond");
-
-                assertEquals("John", claims.get("firstName", String.class), "firstName should correspond");
-                assertEquals("Doe", claims.get("lastName", String.class), "lastName should correspond");
-                assertEquals("JohnLogin", claims.get("displayName", String.class), "displayName should correspond");
-
-                List<String> rolesList = claims.get("roles", List.class);
-                assertEquals(1, rolesList.size(), "Should have only one role");
-                assertEquals(userRole.getName(), rolesList.get(0), "role should match default role");
-
-                assertEquals(userToLog.getCreatedAt().getTime(), claims.get("userCreatedAt", Long.class),
-                                "Should have creation timestamp");
+                assertEquals(userToLog.getId().toString(), claims.getSubject(), "subject should be user UUID");
+                assertNull(claims.get("firstName"), "firstName should not be in token claims");
+                assertNull(claims.get("lastName"), "lastName should not be in token claims");
+                assertNull(claims.get("displayName"), "displayName should not be in token claims");
+                assertNull(claims.get("roles"), "roles should not be in token claims");
                 assertNotNull(claims.getIssuedAt(), "Should have time issued");
                 assertNotNull(claims.getExpiration(), "Should have expiration date");
                 assertTrue(claims.getExpiration().after(new Date()), "Should not have passed expiration date");
