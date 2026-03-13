@@ -69,6 +69,15 @@ public class ApiResponseFactory {
         return responseBuilder.body(new ApiResponse<>(true, message, null));
     }
 
+    public static <T> ResponseEntity<ApiResponse<T>> successWithCookies(String message, T data,
+            ResponseCookie... cookies) {
+        var responseBuilder = ResponseEntity.ok();
+        for (ResponseCookie cookie : cookies) {
+            responseBuilder.header("Set-Cookie", cookie.toString());
+        }
+        return responseBuilder.body(new ApiResponse<>(true, message, data));
+    }
+
     public static <T> ResponseEntity<ApiResponse<T>> error(String message, T data, HttpStatus status) {
         return ResponseEntity.status(status).body(new ApiResponse<>(false, message, null));
     }

@@ -4,7 +4,6 @@ import com.example.finder.config.JwtProperties;
 import com.example.finder.controller.UserRelatedTest;
 import com.example.finder.dto.input.RequestLogin;
 import com.example.finder.model.AppUser;
-import com.example.finder.model.enums.AvailableRoles;
 import com.example.finder.repository.AppUserRepository;
 import com.example.finder.repository.RecordStatusRepository;
 import com.example.finder.repository.RoleRepository;
@@ -31,7 +30,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -110,6 +108,8 @@ class AdminAuthControllerTest extends UserRelatedTest {
                                 .content(objectMapper.writeValueAsString(credentials)))
                                 .andExpect(status().isOk())
                                 .andExpect(header().exists("Set-Cookie"))
+                                .andExpect(jsonPath("$.data").exists())
+                                .andExpect(jsonPath("$.data.email").value(adminUser.getEmail()))
                                 .andReturn();
 
                 String setCookieHeader = result.getResponse().getHeader("Set-Cookie");
@@ -121,7 +121,6 @@ class AdminAuthControllerTest extends UserRelatedTest {
                 assertTrue(setCookieHeader.contains("SameSite=Lax"), "Cookie should have SameSite=Lax");
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void testAdminLogin_GivenValidAdminCredentials_CookieContainsJwtWithAdminRole() throws Exception {
                 RequestLogin credentials = new RequestLogin(
@@ -153,18 +152,11 @@ class AdminAuthControllerTest extends UserRelatedTest {
 
                 Claims claims = jwsClaims.getBody();
 
-                // Verify admin user data in claims
-                assertEquals(adminUser.getEmail(), claims.getSubject(), "Email should match");
-                assertEquals("Admin", claims.get("firstName", String.class), "FirstName should match");
-                assertEquals("User", claims.get("lastName", String.class), "LastName should match");
-                assertEquals("AdminTest", claims.get("displayName", String.class), "DisplayName should match");
-
-                // Verify admin role is present in JWT
-                List<String> rolesList = claims.get("roles", List.class);
-                assertNotNull(rolesList, "Roles should be present in JWT");
-                assertFalse(rolesList.isEmpty(), "Roles list should not be empty");
-                assertTrue(rolesList.contains(AvailableRoles.ADMIN.getDisplayName()),
-                                "Admin role should be present in roles list");
+                assertEquals(adminUser.getId().toString(), claims.getSubject(), "Subject should be admin UUID");
+                assertNull(claims.get("firstName"), "firstName should not be in token claims");
+                assertNull(claims.get("lastName"), "lastName should not be in token claims");
+                assertNull(claims.get("displayName"), "displayName should not be in token claims");
+                assertNull(claims.get("roles"), "roles should not be in token claims");
         }
 
         @Test

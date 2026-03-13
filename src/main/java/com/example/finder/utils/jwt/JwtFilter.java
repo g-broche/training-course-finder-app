@@ -1,14 +1,14 @@
 package com.example.finder.utils.jwt;
 
+import com.example.finder.model.AppUser;
+import com.example.finder.repository.AppUserRepository;
 import com.example.finder.service.CustomUserDetailsService;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,18 +17,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private final AppUserRepository appUserRepository;
 
-    public JwtFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
+    public JwtFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService,
+            AppUserRepository appUserRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.appUserRepository = appUserRepository;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class JwtFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String jwt = null;
-        String username = null;
+        UUID userId = null;
 
         // Step 1: Extract JWT from Authorization header (Bearer token)
         final String authHeader = request.getHeader("Authorization");
@@ -54,35 +56,33 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
-        // Step 3: Extract username from JWT if token exists
+        // Step 3: Extract user id from JWT if token exists
         if (jwt != null) {
             try {
-                username = jwtUtil.extractUsername(jwt);
+                userId = jwtUtil.extractUserId(jwt);
             } catch (Exception e) {
-                // If JWT is malformed or invalid, set username to null
-                username = null;
+                // If JWT is malformed or invalid, set user id to null
+                userId = null;
             }
         }
 
-        // Step 4: Authenticate user if username found and not already authenticated
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // Step 4: Authenticate user if user id found and not already authenticated
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                // Load user details from database
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // Load user from database
+                AppUser user = appUserRepository.findById(userId).orElseThrow();
 
-                // Validate JWT token against user details
-                boolean isJwtvalid = jwtUtil.isTokenValid(jwt, userDetails);
+                // Build user details from user entity
+                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+
+                // Validate JWT token against user identity
+                boolean isJwtvalid = jwtUtil.isTokenValid(jwt, user);
 
                 if (isJwtvalid) {
-                    // Extract roles from JWT claims
-                    Claims claims = jwtUtil.extractAllClaims(jwt);
-                    @SuppressWarnings("unchecked")
-                    List<String> roles = claims.get("roles", List.class);
-
-                    // Convert roles to Spring Security authorities (add "ROLE_" prefix)
-                    List<GrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                            .collect(Collectors.toList());
+                    // Convert user roles to Spring Security authorities (add "ROLE_" prefix)
+                    var authorities = user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()))
+                            .toList();
 
                     // Create authentication token with user details and authorities
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

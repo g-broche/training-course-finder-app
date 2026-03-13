@@ -1,8 +1,9 @@
 package com.example.finder.utils.jwt;
 
+import com.example.finder.model.AppUser;
+import com.example.finder.model.Role;
+import com.example.finder.repository.AppUserRepository;
 import com.example.finder.service.CustomUserDetailsService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.impl.DefaultClaims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -20,10 +21,13 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +38,9 @@ class JwtFilterTest {
 
     @Mock
     private CustomUserDetailsService userDetailsService;
+
+    @Mock
+    private AppUserRepository appUserRepository;
 
     @Mock
     private HttpServletRequest request;
@@ -51,78 +58,108 @@ class JwtFilterTest {
 
     @BeforeEach
     void setUp() {
-        jwtFilter = new JwtFilter(jwtUtil, userDetailsService);
+        jwtFilter = new JwtFilter(jwtUtil, userDetailsService, appUserRepository);
         SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
-    void doFilterInternal_ShouldExtractTokenFromAuthorizationHeader() throws ServletException, IOException {
+    void doFilterInternal_ShouldAuthenticateFromAuthorizationHeader() throws ServletException, IOException {
         String token = "test-jwt-token";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
+        AppUser user = createUser(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), "test@example.com", "USER");
+        UserDetails userDetails = createUserDetails(user.getEmail());
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
         when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(true);
-
-        Claims claims = new DefaultClaims();
-        claims.put("roles", List.of("USER"));
-        when(jwtUtil.extractAllClaims(token)).thenReturn(claims);
+        when(jwtUtil.extractUserId(token)).thenReturn(user.getId());
+        when(appUserRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userDetailsService.loadUserByUsername(user.getEmail())).thenReturn(userDetails);
+        when(jwtUtil.isTokenValid(token, user)).thenReturn(true);
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil).extractUsername(token);
+        verify(jwtUtil).extractUserId(token);
+        verify(appUserRepository).findById(user.getId());
+        verify(securityContext).setAuthentication(any());
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void doFilterInternal_ShouldExtractTokenFromCookie() throws ServletException, IOException {
-        String token = "test-jwt-token";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
+    void doFilterInternal_ShouldAuthenticateFromCookieFallback() throws ServletException, IOException {
+        String token = "cookie-jwt-token";
+        AppUser user = createUser(UUID.fromString("123e4567-e89b-12d3-a456-426614174001"), "cookie@example.com",
+                "ADMIN");
+        UserDetails userDetails = createUserDetails(user.getEmail());
         Cookie[] cookies = { new Cookie("accessToken", token) };
 
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getCookies()).thenReturn(cookies);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
         when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(true);
-
-        Claims claims = new DefaultClaims();
-        claims.put("roles", List.of("USER"));
-        when(jwtUtil.extractAllClaims(token)).thenReturn(claims);
+        when(jwtUtil.extractUserId(token)).thenReturn(user.getId());
+        when(appUserRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userDetailsService.loadUserByUsername(user.getEmail())).thenReturn(userDetails);
+        when(jwtUtil.isTokenValid(token, user)).thenReturn(true);
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil).extractUsername(token);
+        verify(jwtUtil).extractUserId(token);
+        verify(appUserRepository).findById(user.getId());
+        verify(securityContext).setAuthentication(any());
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void doFilterInternal_ShouldContinueFilterChainWhenNoToken() throws ServletException, IOException {
+    void doFilterInternal_ShouldContinueWhenNoToken() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getCookies()).thenReturn(null);
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
+        verify(jwtUtil, never()).extractUserId(anyString());
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtil, never()).extractUsername(anyString());
     }
 
     @Test
-    void doFilterInternal_ShouldNotAuthenticateWhenTokenIsInvalid() throws ServletException, IOException {
-        String token = "invalid-jwt-token";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
+    void doFilterInternal_ShouldContinueWhenTokenExtractionFails() throws ServletException, IOException {
+        String token = "malformed-token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
+        when(jwtUtil.extractUserId(token)).thenThrow(new RuntimeException("Invalid token"));
+
+        assertDoesNotThrow(() -> jwtFilter.doFilterInternal(request, response, filterChain));
+
+        verify(appUserRepository, never()).findById(any());
+        verify(securityContext, never()).setAuthentication(any());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void doFilterInternal_ShouldSkipWhenAlreadyAuthenticated() throws ServletException, IOException {
+        String token = "test-jwt-token";
+        Authentication existingAuth = mock(Authentication.class);
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtUtil.extractUserId(token)).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174009"));
+        when(securityContext.getAuthentication()).thenReturn(existingAuth);
+
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        verify(appUserRepository, never()).findById(any());
+        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void doFilterInternal_ShouldNotAuthenticateWhenTokenIsInvalidForUser() throws ServletException, IOException {
+        String token = "invalid-jwt-token";
+        AppUser user = createUser(UUID.fromString("123e4567-e89b-12d3-a456-426614174010"), "test@example.com", "USER");
+        UserDetails userDetails = createUserDetails(user.getEmail());
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(false);
+        when(jwtUtil.extractUserId(token)).thenReturn(user.getId());
+        when(appUserRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userDetailsService.loadUserByUsername(user.getEmail())).thenReturn(userDetails);
+        when(jwtUtil.isTokenValid(token, user)).thenReturn(false);
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
@@ -131,129 +168,33 @@ class JwtFilterTest {
     }
 
     @Test
-    void doFilterInternal_ShouldNotAuthenticateWhenAlreadyAuthenticated() throws ServletException, IOException {
-        String token = "test-jwt-token";
-        String email = "test@example.com";
-        Authentication existingAuth = mock(Authentication.class);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
-        when(securityContext.getAuthentication()).thenReturn(existingAuth);
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterInternal_ShouldHandleExceptionInTokenExtraction() throws ServletException, IOException {
-        String token = "malformed-token";
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenThrow(new RuntimeException("Invalid token"));
-
-        // Should not throw exception, should continue filter chain
-        assertDoesNotThrow(() -> jwtFilter.doFilterInternal(request, response, filterChain));
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterInternal_ShouldSkipWhenAuthorizationHeaderMissingBearer() throws ServletException, IOException {
+    void doFilterInternal_ShouldSkipWhenAuthorizationHeaderIsNotBearer() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Basic somevalue");
         when(request.getCookies()).thenReturn(null);
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil, never()).extractUsername(anyString());
+        verify(jwtUtil, never()).extractUserId(anyString());
         verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterInternal_ShouldIgnoreNonAccessTokenCookies() throws ServletException, IOException {
-        Cookie[] cookies = {
-                new Cookie("session", "session-value"),
-                new Cookie("refreshToken", "refresh-token-value")
-        };
-
-        when(request.getHeader("Authorization")).thenReturn(null);
-        when(request.getCookies()).thenReturn(cookies);
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(jwtUtil, never()).extractUsername(anyString());
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterInternal_ShouldSetAuthenticationWithRoles() throws ServletException, IOException {
-        String token = "test-jwt-token";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
-        when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(true);
-
-        Claims claims = new DefaultClaims();
-        claims.put("roles", List.of("USER", "ADMIN"));
-        when(jwtUtil.extractAllClaims(token)).thenReturn(claims);
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(securityContext).setAuthentication(any());
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void doFilterInternal_ShouldCallUserDetailsService() throws ServletException, IOException {
-        String token = "test-jwt-token";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
-        when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(true);
-
-        Claims claims = new DefaultClaims();
-        claims.put("roles", List.of("USER"));
-        when(jwtUtil.extractAllClaims(token)).thenReturn(claims);
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(userDetailsService).loadUserByUsername(email);
-    }
-
-    @Test
-    void doFilterInternal_ShouldStripBearerPrefixCorrectly() throws ServletException, IOException {
-        String token = "actual-token-without-bearer";
-        String email = "test@example.com";
-        UserDetails userDetails = createUserDetails(email);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractUsername(token)).thenReturn(email);
-        when(securityContext.getAuthentication()).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid(token, userDetails)).thenReturn(true);
-
-        Claims claims = new DefaultClaims();
-        claims.put("roles", List.of("USER"));
-        when(jwtUtil.extractAllClaims(token)).thenReturn(claims);
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(jwtUtil).extractUsername(token);
     }
 
     private UserDetails createUserDetails(String email) {
         return User.builder()
                 .username(email)
                 .password("password")
-                .authorities(Collections.emptyList())
+                .authorities(Set.of())
                 .build();
+    }
+
+    private AppUser createUser(UUID id, String email, String roleName) {
+        AppUser user = new AppUser();
+        user.setId(id);
+        user.setEmail(email);
+
+        Role role = new Role();
+        role.setName(roleName);
+        user.setRoles(Set.of(role));
+
+        return user;
     }
 }

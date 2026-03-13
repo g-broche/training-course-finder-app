@@ -5,9 +5,11 @@ import com.example.finder.model.Role;
 
 import java.sql.Timestamp;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class DetailedUserDto {
+    private UUID uuid;
     private String firstName;
     private String lastName;
     private String displayName;
@@ -18,6 +20,7 @@ public class DetailedUserDto {
     private Set<RoleDto> roles;
 
     public DetailedUserDto(AppUser user) {
+        this.uuid = user.getId();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.displayName = user.getDisplayName();
@@ -29,6 +32,10 @@ public class DetailedUserDto {
                 .map(Role::toDto)
                 .collect(Collectors.toSet());
         this.createdAt = user.getCreatedAt();
+    }
+
+    public UUID getUuid() {
+        return uuid;
     }
 
     public String getFirstName() {
