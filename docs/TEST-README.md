@@ -18,11 +18,7 @@ The suite is split by concern:
 From the backend root:
 
 ```bash
-# Linux / macOS
-./mvnw test
-
-# Windows
-mvnw.cmd test
+mvn test
 ```
 
 ## Reports

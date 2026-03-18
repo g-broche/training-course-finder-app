@@ -191,9 +191,7 @@ public class AnnounceService {
      * @return api response with DTO representation of the created announce
      */
     @Transactional
-    public ResponseEntity<?> createNewFoundAnnounce(
-            RequestAnnounce request,
-            MultipartFile receivedImage) {
+    public ResponseEntity<?> createNewFoundAnnounce(RequestAnnounce request, MultipartFile receivedImage) {
         // validate received image
         try {
             validatorImage.validateImage(receivedImage);
@@ -203,7 +201,6 @@ public class AnnounceService {
         // creates variable out of try scope for use during catch
         String savedImageName = null;
         boolean isSuccess = false;
-
         try {
             // get requester data using the token provided with the request
             AppUser requester = validatorAuth.getUserFromSecurityContext();
@@ -250,14 +247,10 @@ public class AnnounceService {
 
             // save announce through ORM
             announceRepository.save(newAnnounce);
-
-            // construct path to image and logs it for reference
             String webPathToImage = imageUtil.getWebPathToPhoto(newAnnounce.getPhoto());
-            Printer.printLog("New announce: " + newAnnounce.getTitle() + " ; image -> " + webPathToImage);
             // create DTO object based on the new announce to return the data in the
             // response
             AnnounceDto announceDto = new AnnounceDto(newAnnounce, webPathToImage);
-
             // if this point is reached set isSuccess to true and return the response
             isSuccess = true;
             return ApiResponseFactory.success(announceDto);
@@ -277,9 +270,8 @@ public class AnnounceService {
             if (!isSuccess) {
                 try {
                     Files.deleteIfExists(imageUtil.getLocalImagePath(savedImageName));
-                    Printer.printLog("deleted file after failure");
                 } catch (Exception e) {
-                    Printer.printLog("failed to delete file");
+                    Printer.printLog("failed to delete file after failed announce creation");
                     Printer.printErrorLogWithDetails(e);
                 }
             }
