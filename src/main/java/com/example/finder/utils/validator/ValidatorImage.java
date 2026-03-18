@@ -38,7 +38,6 @@ public class ValidatorImage {
                     "Image dimensions exceed maximum of " + MAX_IMAGE_DIMENSION_PX + "x" + MAX_IMAGE_DIMENSION_PX
                             + " pixels.");
         }
-
         return true;
     }
 

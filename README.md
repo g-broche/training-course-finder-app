@@ -13,7 +13,7 @@ This repo covers the subproject related to the API implementation.
 
 ## Documentation
 
-- Architecture documentation: [docs/architecture/README.md](docs/architecture/README.md)
-- API and Swagger documentation: [docs/api/README.md](docs/api/README.md)
-- Tests documentation: [docs/tests/README.md](docs/tests/README.md)
-- Documentation index: [docs/refactorReadme.md](docs/refactorReadme.md)
+- Architecture: see [ARCHITECTURE-README.md](docs/ARCHITECTURE-README.md)
+- API and Swagger: see [API-README.md](docs/API-README.md)
+- Tests: see [TEST-README.md](docs/TEST-README.md)
+- Deployment scripts and VPS setup: see [docs/deploy](docs/deploy)

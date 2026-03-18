@@ -19,8 +19,6 @@ The project includes OpenAPI documentation with Springdoc (`springdoc-openapi-st
 After starting the app locally, use:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- Alternative Swagger path: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 Swagger endpoints are explicitly allowed in security configuration.
 
